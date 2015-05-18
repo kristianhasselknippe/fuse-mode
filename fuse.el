@@ -16,17 +16,13 @@
 
 
 
-
-
 (defun write-to-fuse-buffer (str)
 	(save-excursion
 	  (set-buffer (process-buffer fuse-client))
-	  (insert (format "[got] %s" str)))
-	)
+	  (insert (format "[GOT] %s" (prin1-to-string str)))))
 
 (defun write-line-to-fuse-buffer (str)
-  (write-to-fuse-buffer (concat str "\n")))
-
+  (write-to-fuse-buffer (concat (prin1-to-string str) "\n")))
 
 
 (defun set-api-version ()
@@ -40,7 +36,6 @@
 	  (progn
 		(cond ((string= command-type "SetAPIVersion") (set-api-version)))
 		(princ msg)))))
-
 
 
 (defun set-features ()

@@ -8,17 +8,29 @@
 
 (defvar fuse-client)
 
-(defun send-command (command)
-  (let ((str (concat
-			 (concat
-			  (number-to-string (length command)) "\n")
-			 command)))
-	(print str)
-	(process-send-string fuse-client str)))
 
+(defvar buffer-string "")
 
 (defun plugin-filter (process message)
-	(delegate-command message))
+  (let ((received
+		 (setq buffer-string (concat buffer-string message))))
+	(let ((command (split-string received "\n")))
+	  (when (> (length command) 1)
+		(when (>= (length (substring received (length (car command))))
+				  (string-to-number (car command)))
+
+		  (let ((command-string
+				 (substring
+				  received
+				  (string-to-number (car command))
+				  (length (cadr command)))))
+			(progn
+			  (setq buffer-string
+					(substring received (+ (length (car command))(string-to-number (car command)))))
+			  (write-line-to-fuse-buffer "We have command :D"))))))))
+
+										;	(delegate-command message)
+  
 
 (defun create-connection ()
   (setq fuse-client
@@ -50,6 +62,15 @@
 	 Console
 	 BuildEvent)))
 
+
+
+(defun send-command (command)
+  (let ((str (concat
+			 (concat
+			  (number-to-string (length command)) "\n")
+			 command)))
+	(print str)
+	(process-send-string fuse-client str)))
 
 (defun fuse-status ()
   (process-status fuse-client))
