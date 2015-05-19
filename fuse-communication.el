@@ -11,26 +11,27 @@
 
 (defvar buffer-string "")
 
-(defun plugin-filter (process message)
-  (let ((received
-		 (setq buffer-string (concat buffer-string message))))
+(defun eat-buffer (message)
+  (let ((received (setq buffer-string ((concat buffer-string message))))
 	(let ((command (split-string received "\n")))
-	  (when (> (length command) 1)
-		(when (>= (length (substring received (length (car command))))
-				  (string-to-number (car command)))
+	  (when (and (> (length command) 1)
+				 (numberp (car command))
+				 (>= (length (substring received (length (car command))))
+					 (string-to-number (car command))))
+		(let ((command-string (substring
+							   received
+							   (string-to-number (car command))
+							   (length (cadr command)))))
+		  (progn
+			(setq buffer-string
+				  (substring received (+ (length (car command))(string-to-number (car command)) 1)))
+			(write-line-to-fuse-buffer "We have command :D")))))))
 
-		  (let ((command-string
-				 (substring
-				  received
-				  (string-to-number (car command))
-				  (length (cadr command)))))
-			(progn
-			  (setq buffer-string
-					(substring received (+ (length (car command))(string-to-number (car command)))))
-			  (write-line-to-fuse-buffer "We have command :D"))))))))
 
+(defun plugin-filter (process message)
+  (eat-buffer message))
 										;	(delegate-command message)
-  
+
 
 (defun create-connection ()
   (setq fuse-client
