@@ -11,8 +11,14 @@
 
 (defvar buffer-string "")
 
+(defun trim-leading-chars (str)
+  (while
+	  (
+
+  )
+
 (defun eat-buffer (message)
-  (let ((received (setq buffer-string ((concat buffer-string message))))
+  (let ((received (setq buffer-string (trim-leading-chars ((concat buffer-string message)))))
 	(let ((command (split-string received "\n")))
 	  (when (and (> (length command) 1)
 				 (numberp (car command))
@@ -23,9 +29,12 @@
 							   (string-to-number (car command))
 							   (length (cadr command)))))
 		  (progn
-			(setq buffer-string
-				  (substring received (+ (length (car command))(string-to-number (car command)) 1)))
-			(write-line-to-fuse-buffer "We have command :D")))))))
+			(write-line-to-fuse-buffer "We have command :D")
+			(eat-buffer (setq buffer-string
+							  (trim-leading-chars
+							   (substring received
+										  (+(length (car command))
+											(string-to-number (car command)) 1))))))))))))
 
 
 (defun plugin-filter (process message)
