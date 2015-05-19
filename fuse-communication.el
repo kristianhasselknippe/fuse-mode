@@ -1,4 +1,5 @@
 (require 'json)
+(require 'cl)
 
 (defvar listen-port 12122
     "port of the server")
@@ -11,14 +12,18 @@
 
 (defvar buffer-string "")
 
-(defun trim-leading-chars (str)
-  (while
-	  (
+(defun string-integer-p (string)
+   (if (string-match "\\`[-+]?[0-9]+\\'" string)
+       t
+     nil))
 
-  )
+(defun trim-leading-chars (str)
+  (dotimes (i (length str))
+	(when (> (string-to-number (string (aref str i))) 0)
+	  (return (substring str i)))))
 
 (defun eat-buffer (message)
-  (let ((received (setq buffer-string (trim-leading-chars ((concat buffer-string message)))))
+  (let ((received (setq buffer-string (trim-leading-chars (concat buffer-string message)))))
 	(let ((command (split-string received "\n")))
 	  (when (and (> (length command) 1)
 				 (numberp (car command))
@@ -34,7 +39,7 @@
 							  (trim-leading-chars
 							   (substring received
 										  (+(length (car command))
-											(string-to-number (car command)) 1))))))))))))
+											(string-to-number (car command)) 1)))))))))))
 
 
 (defun plugin-filter (process message)
