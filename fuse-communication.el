@@ -25,21 +25,29 @@
 (defun eat-buffer (message)
   (let ((received (setq buffer-string (trim-leading-chars (concat buffer-string message)))))
 	(let ((command (split-string received "\n")))
-	  (when (and (> (length command) 1)
-				 (numberp (car command))
-				 (>= (length (substring received (length (car command))))
-					 (string-to-number (car command))))
-		(let ((command-string (substring
-							   received
-							   (string-to-number (car command))
-							   (length (cadr command)))))
+	  (let ((command-length (string-to-number (car command))))
+		(princ (length command))
+		(princ (numberp (car command)))
+		(print (car command))
+		(when (and (> (length command) 1)
+				   (string-integer-p (car command))
+				   (>= (length (substring received (length (car command))))
+					   command-length))
 		  (progn
-			(write-line-to-fuse-buffer "We have command :D")
-			(eat-buffer (setq buffer-string
-							  (trim-leading-chars
-							   (substring received
-										  (+(length (car command))
-											(string-to-number (car command)) 1)))))))))))
+			(princ "foobar\n")
+			(let ((command-string (substring
+								   received
+								   command-length
+								   (length (cadr command)))))
+			  (progn
+				(write-line-to-fuse-buffer "We have command :D")
+				(print received)
+				(setq buffer-string
+					   (substring received
+								  (+ (length (car command))
+									 command-length
+									 1)))
+				))))))))
 
 
 (defun plugin-filter (process message)
