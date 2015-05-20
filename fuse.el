@@ -1,5 +1,7 @@
 (load-file "fuse-communication.el")
 
+(defvar api-version)
+
 (defun fuse-current-file-name ()
   (buffer-file-name (current-buffer)))
 
@@ -25,17 +27,15 @@
   (write-to-fuse-buffer (concat (prin1-to-string str) "\n")))
 
 
-(defun set-api-version ()
-  (progn
-	(princ "SETTING API VERSION")
-	(write-line-to-fuse-buffer "SETTING API VERSION")))
+(defun set-api-version (command-args)
+  (setq api-version
+		(string-to-number (cdr
+		 (assoc 'Version (json-read-from-string command-args))))))
 
-(defun delegate-command (msg)
-  (let ((command (json-read-from-string (cadr (split-string msg "\n")))))
+(defun delegate-command (command-string)
+  (let ((command (json-read-from-string command-string)))
 	(let ((command-type (cdr (assoc 'Command command))))
-	  (progn
-		(cond ((string= command-type "SetAPIVersion") (set-api-version)))
-		(princ msg)))))
+		(cond ((string= command-type "SetAPIVersion") (set-api-version (cdr (assoc 'Arguments command))))))))
 
 
 (defun set-features ()

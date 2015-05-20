@@ -37,14 +37,9 @@
 	"")))
 
 
-
-(defun eat-buffer (message)
-	)
-
-
 (defun plugin-filter (process message)
-  (eat-buffer message))
-										;	(delegate-command message)
+  (delegate-command
+   (pop-command (setq buffe-string (concat message buffer-string)))))
 
 
 (defun create-connection ()
