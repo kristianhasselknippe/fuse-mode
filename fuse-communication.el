@@ -39,7 +39,7 @@
 
 (defun plugin-filter (process message)
   (delegate-command
-   (pop-command (setq buffe-string (concat message buffer-string)))))
+   (pop-command (setq buffer-string (concat message buffer-string)))))
 
 
 (defun create-connection ()

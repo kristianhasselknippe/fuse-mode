@@ -33,6 +33,7 @@
 		 (assoc 'Version (json-read-from-string command-args))))))
 
 (defun delegate-command (command-string)
+  (princ command-string)
   (let ((command (json-read-from-string command-string)))
 	(let ((command-type (cdr (assoc 'Command command))))
 		(cond ((string= command-type "SetAPIVersion") (set-api-version (cdr (assoc 'Arguments command))))))))
@@ -42,15 +43,9 @@
   (send-command (create-default-features-string)))
 
 
-(defun request-code-completion (id path text type c-line c-character)
-  (send-command
-	(json-encode `((Command . RequestCodeCompletion)
-				  (Arguments .
-							  ((QueryId . ,id)
-							   (Path . ,path)
-							   (Text . ,text)
-							   (Type . ,type)
-							   (CaretPosition . ((Line . ,c-line) (Character . ,c-character)))))))))
+(defun request-code-completion ()
+  (interactive)
+  (send-command (get-code-completion-info)))
 
 
 (defun get-suggestions ()
