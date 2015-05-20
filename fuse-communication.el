@@ -22,32 +22,19 @@
 	(when (> (string-to-number (string (aref str i))) 0)
 	  (return (substring str i)))))
 
+(defun pop-command (str)
+  (let ((strings (split-string str "\n")))
+	(let ((command-length (string-to-number (trim-leading-chars (car strings))))
+		  (tail-string (reduce (lambda (s1 s2) (concat s1 s2)) (cdr strings))))
+	  (when (>= (length tail-string) command-length)
+		(substring tail-string 0 command-length)))))
+
+
+(defun test-pop-commands ()
+  (print "5\nabcdefg"))
+
 (defun eat-buffer (message)
-  (let ((received (setq buffer-string (trim-leading-chars (concat buffer-string message)))))
-	(let ((command (split-string received "\n")))
-	  (let ((command-length (string-to-number (car command))))
-		(princ (length command))
-		(princ (numberp (car command)))
-		(print (car command))
-		(when (and (> (length command) 1)
-				   (string-integer-p (car command))
-				   (>= (length (substring received (length (car command))))
-					   command-length))
-		  (progn
-			(princ "foobar\n")
-			(let ((command-string (substring
-								   received
-								   command-length
-								   (length (cadr command)))))
-			  (progn
-				(write-line-to-fuse-buffer "We have command :D")
-				(print received)
-				(setq buffer-string
-					   (substring received
-								  (+ (length (car command))
-									 command-length
-									 1)))
-				))))))))
+	)
 
 
 (defun plugin-filter (process message)
