@@ -22,16 +22,21 @@
 	(when (> (string-to-number (string (aref str i))) 0)
 	  (return (substring str i)))))
 
+;todo: this should not have side effects!
 (defun pop-command (str)
+  "Pops a command from str and modifies buffer-string"
   (let ((strings (split-string str "\n")))
+	(if (> (length (trim-leading-chars (car strings))) 0)
 	(let ((command-length (string-to-number (trim-leading-chars (car strings))))
-		  (tail-string (reduce (lambda (s1 s2) (concat s1 s2)) (cdr strings))))
-	  (when (>= (length tail-string) command-length)
-		(substring tail-string 0 command-length)))))
+		  (tail-string (reduce (lambda (s1 s2) (concat s1 "\n" s2)) (cdr strings))))
+	  (if (>= (length tail-string) command-length)
+		  (progn
+			(setq buffer-string (substring tail-string command-length))
+			(substring tail-string 0 command-length))
+		""))
+	"")))
 
 
-(defun test-pop-commands ()
-  (print "5\nabcdefg"))
 
 (defun eat-buffer (message)
 	)
