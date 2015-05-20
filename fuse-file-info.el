@@ -14,28 +14,47 @@ request-code-completion (id path text type c-line c-character)
     }
 }
 
-
 (defun get-current-path ()
   (interactive)
   (buffer-file-name (current-buffer)))
 
 
-(defun get-current-text (file)
-  )
+(defun get-current-text ()
+  (interactive)
+   (let ((buffer (current-buffer)))
+	 (with-current-buffer buffer
+	   (save-excursion
+		 (save-restriction
+		   (widen)
+		   (buffer-substring-no-properties (point-min) (point-max)))))))
 
 (defun get-current-type ()
   (interactive)
-  (let ((ret (last (split-string (get-current-path) "\\."))))
-	(print ret)
-	ret))
+  (car (last (split-string (get-current-path) "\\."))))
 
 (defun get-current-line ()
   (interactive)
-  (let ((ret (line-number-at-pos)))
-	(princ ret)
-	ret))
+  (line-number-at-pos))
 
 (defun get-current-character ()
   (interactive)
   (current-column))
 
+(defun get-code-completion-info ()
+  (interactive)
+  (let ((ret
+		 (let ((id 1)
+			   (path (get-current-path))
+			   (text (get-current-text))
+			   (type (get-current-type))
+			   (c-line (get-current-line))
+			   (c-character (get-current-character)))
+		   (json-encode `((Command . RequestCodeCompletion)
+						  (Arguments .
+									 ((QueryId . ,id)
+									  (Path . ,path)
+									  (Text . ,text)
+									  (Type . ,type)
+									  (CaretPosition . ((Line . ,c-line) (Character . ,c-character))))))))))
+	
+	ret))
