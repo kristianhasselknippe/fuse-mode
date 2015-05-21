@@ -30,13 +30,21 @@
 (defun set-api-version (command-args)
   (setq api-version
 		(string-to-number (cdr
-		 (assoc 'Version (json-read-from-string command-args))))))
+						   (assoc 'Version (json-read-from-string command-args))))))
+
+(defun write-to-console (command-args)
+  (write-line-to-fuse-buffer (cdr (assoc 'Text (json-read-from-string command-args)))))
+
+  
 
 (defun delegate-command (command-string)
-  (princ command-string)
-  (let ((command (jso  n-read-from-string command-string)))
+  ;(princ command-string)
+  (let ((command (json-read-from-string command-string)))
 	(let ((command-type (cdr (assoc 'Command command))))
-		(cond ((string= command-type "SetAPIVersion") (set-api-version (cdr (assoc 'Arguments command))))))))
+	  ;(print command-type)
+	  (cond ((string= command-type "SetAPIVersion") (set-api-version (cdr (assoc 'Arguments command))))
+			((string= command-type "WriteToConsole") (write-to-console (cdr (assoc 'Arguments command))))
+			))))
 
 
 (defun set-features ()
