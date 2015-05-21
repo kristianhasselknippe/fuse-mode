@@ -14,7 +14,7 @@
 				 ,(mapcar (lambda (feature) `((:Name . ,feature))) features)))))
 
 (defun create-default-features ()
-  (create-set-features '(CodeCompletion ShortcutFeature)))
+  (create-set-features '(CodeCompletion ShortcutFeature BuildEvent)))
 
 
 
@@ -34,7 +34,7 @@
 
 (defun delegate-command (command-string)
   (princ command-string)
-  (let ((command (json-read-from-string command-string)))
+  (let ((command (jso  n-read-from-string command-string)))
 	(let ((command-type (cdr (assoc 'Command command))))
 		(cond ((string= command-type "SetAPIVersion") (set-api-version (cdr (assoc 'Arguments command))))))))
 
@@ -53,7 +53,12 @@
   (request-code-completion 2 "path" "text" "type" 4 9))
 
 
+(defun send-new-build ()
+  (interactive)
+  (send-command (json-encode '((Command . NewBuild)))))
 
-
+(defun send-recompile ()
+  (interactive)
+  (send-command (json-encode '((Command . Recompile)))))
 
 ;C-h m
