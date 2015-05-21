@@ -75,10 +75,14 @@
 
 
 (defun send-command (command)
+  (if (equal (fuse-status) 'closed)
+	  (progn
+		(create-connection)
+		(set-features)))
   (let ((str (concat
-			 (concat
-			  (number-to-string (length command)) "\n")
-			 command)))
+			  (concat
+			   (number-to-string (length command)) "\n")
+			  command)))
 	(print str)
 	(process-send-string fuse-client str)))
 
