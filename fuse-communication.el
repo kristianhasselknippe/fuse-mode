@@ -18,27 +18,59 @@
      nil))
 
 (defun trim-leading-chars (str)
-  (dotimes (i (length str))
-	(when (> (string-to-number (string (aref str i))) 0)
-	  (return (substring str i)))))
+  (let ((ret "")
+		(loop? 't)
+		(i 0))
+	(while loop?
+	  (progn
+		(if (> (string-to-number (substring str i (+ i 1))) 0)
+			(progn
+			  (setq ret (substring str i))
+			  (setq loop? nil)))
+		(setq i (+ i 1))
+		(if (>= i (length str))
+			(setq loop? nil))))
+	ret))
 
-;todo: this should not have side effects!
-(defun pop-command (stri)
-  "Pops a command from str and modifies buffer-string"
-  (let ((str (trim-leading-chars stri)))
-	(let ((strings (split-string str "\n")))
-	  (if (> (length (trim-leading-chars (car strings))) 0)
-		  (let ((command-length (string-to-number (trim-leading-chars (car strings))))
-				(tail-string (if (> (length (cdr strings)) 0)
-								 (reduce (lambda (s1 s2) (concat s1 "\n" s2)) (cdr strings))
-							   "")))
-			(if (>= (length tail-string) command-length)
-				(progn
-				  (setq buffer-string (substring tail-string command-length))
-				  (substring tail-string 0 command-length))
-			  ""))
-		""))))
+(defun string-list-to-string (string-list)
+  (let ((ret ""))
+	(dotimes (i (length string-list))
+	  (setq ret (concat ret (nth i string-list))))
+	ret))
 
+(defun pop-command-from-string (str)
+  (if (> (length str) 0)
+	  (let ((strings (split-string (trim-leading-chars str) "\n")))
+		(if (> (length strings) 0)
+			(if (string-integer-p (car strings))
+				(let ((command-length (string-to-number (car strings)))
+					  (tail (string-list-to-string (cdr strings))))
+				  (if (>= (length tail) command-length)
+					  (substring tail 0 command-length)
+					""))
+			  "")
+		  ""))
+	""))
+
+  
+
+
+
+(defun test-pop-command (test-string expected-result)
+  (let ((assert (pop-command-from-string test-string)))
+	(if (string-equal assert expected-result)
+		(print "test passed")
+	  (print (concat "test failed: " (format "expected %s, but got %s" expected-result assert))))))
+
+(defun pop-command-tests ()
+  (test-pop-command "5\nabcdef" "abcde")
+  (test-pop-command "3\nabc5\nabcdef" "abc")
+  (test-pop-command "abs6\nabcdefg" "abcdef")
+  (test-pop-command "" "")
+  (test-pop-command "abc" "")
+  (test-pop-command "5" "")
+  (test-pop-command "5\n" "")
+  (test-pop-command "5\nabc" ""))
 
 
 
