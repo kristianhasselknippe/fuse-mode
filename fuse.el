@@ -33,6 +33,7 @@
 						   (assoc 'Version (json-read-from-string command-args))))))
 
 (defun write-to-console (command-args)
+  (message command-args)
   (write-line-to-fuse-buffer (cdr (assoc 'Text (json-read-from-string command-args)))))
 
   
@@ -44,21 +45,18 @@
 	  ;(print command-type)
 	  (cond ((string= command-type "SetAPIVersion") (set-api-version (cdr (assoc 'Arguments command))))
 			((string= command-type "WriteToConsole") (write-to-console (cdr (assoc 'Arguments command))))
+			((string= command-type "SetCodeSuggestions") (write-to-console (cdr (assoc 'Arguments command))))
 			))))
 
 
 (defun set-features ()
+  (interactive)
   (send-command (create-default-features-string)))
 
 
-(defun request-code-completion ()
+(defun send-request-code-completion ()
   (interactive)
   (send-command (get-code-completion-info)))
-
-
-(defun get-suggestions ()
-  (interactive)
-  (request-code-completion 2 "path" "text" "type" 4 9))
 
 
 (defun send-new-build ()

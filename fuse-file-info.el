@@ -1,18 +1,3 @@
-request-code-completion (id path text type c-line c-character)
-
-
-
-{
-    "Command": "RequestCodeCompletion",
-    "Arguments": 
-    {
-        "QueryId": 0,
-        "Path": "C:\\Test.uno",
-        "Text": "using Uno;",
-        "Type": "Uno",
-        "CaretPosition": { "Line": 1, "Character": 4 }
-    }
-}
 
 (defun get-current-path ()
   (interactive)
@@ -55,7 +40,7 @@ request-code-completion (id path text type c-line c-character)
 	  (get-dist-from-new-line current-point text))))
 
 (defun get-code-completion-info ()
-  (intperactive)
+  (interactive)
   (let ((ret
 		 (let ((id 1)
 			   (path (get-current-path))

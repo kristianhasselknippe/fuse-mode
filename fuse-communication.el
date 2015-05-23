@@ -23,18 +23,23 @@
 	  (return (substring str i)))))
 
 ;todo: this should not have side effects!
-(defun pop-command (str)
+(defun pop-command (stri)
   "Pops a command from str and modifies buffer-string"
-  (let ((strings (split-string str "\n")))
-	(if (> (length (trim-leading-chars (car strings))) 0)
-	(let ((command-length (string-to-number (trim-leading-chars (car strings))))
-		  (tail-string (reduce (lambda (s1 s2) (concat s1 "\n" s2)) (cdr strings))))
-	  (if (>= (length tail-string) command-length)
-		  (progn
-			(setq buffer-string (substring tail-string command-length))
-			(substring tail-string 0 command-length))
-		""))
-	"")))
+  (let ((str (trim-leading-chars stri)))
+	(let ((strings (split-string str "\n")))
+	  (if (> (length (trim-leading-chars (car strings))) 0)
+		  (let ((command-length (string-to-number (trim-leading-chars (car strings))))
+				(tail-string (if (> (length (cdr strings)) 0)
+								 (reduce (lambda (s1 s2) (concat s1 "\n" s2)) (cdr strings))
+							   "")))
+			(if (>= (length tail-string) command-length)
+				(progn
+				  (setq buffer-string (substring tail-string command-length))
+				  (substring tail-string 0 command-length))
+			  ""))
+		""))))
+
+
 
 
 (defun plugin-filter (process message)
@@ -86,5 +91,5 @@
 	(print str)
 	(process-send-string fuse-client str)))
 
-(defun fuse-status ()
+(defun fuse-status ()  
   (process-status fuse-client))
