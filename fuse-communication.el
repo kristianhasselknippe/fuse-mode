@@ -41,7 +41,7 @@
 (defun pop-command-from-string (str)
   (if (> (length str) 0)
 	  (let ((strings (split-string (trim-leading-chars str) "\n")))
-		(if (> (length strings) 0)
+		(if (> (length strings) 1)
 			(if (string-integer-p (car strings))
 				(let ((command-length (string-to-number (car strings)))
 					  (tail (string-list-to-string (cdr strings))))
@@ -58,32 +58,16 @@
 
 
 
-(defun test-pop-command (test-string expected-result)
-  (let ((assert (pop-command-from-string test-string)))
-	(if (string-equal assert expected-result)
-		(print "test passed")
-	  (print (concat "test failed: " (format "expected %s, but got %s" expected-result assert))))))
-
-(defun pop-command-tests ()
-  (test-pop-command "5\nabcdef" "abcde")
-  (test-pop-command "3\nabc5\nabcdef" "abc")
-  (test-pop-command "abs6\nabcdefg" "abcdef")
-  (test-pop-command "" "")
-  (test-pop-command "abc" "")
-  (test-pop-command "5" "")
-  (test-pop-command "5\n" "")
-  (test-pop-command "5\nabc" ""))
-
-
 (defun process-commands-in-buffer (buffer-str)
-  (let ((command (pop-command (setq buffer-string (concat message buffer-string)))))
-	 (setq buffer-string (substring buffer-string (command-string-length-including-size command)))
-	 (delegate-command command)))
+  (let ((command (pop-command-from-string (setq buffer-string (concat message buffer-string)))))
+	(if (> (length command) 0)
+	 (progn (setq buffer-string (substring buffer-string (command-string-length-including-size command)))
+	 (delegate-command command)))))
 
 (defun plugin-filter (process message)
   (progn
-  (setq buffer-string (concat message buffer-string))
-   (process-commands-in-buffer buffer-string)))
+	(setq buffer-string (concat buffer-string message))
+	(process-commands-in-buffer buffer-string)))
 
 
 (defun create-connection ()

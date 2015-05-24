@@ -39,13 +39,18 @@
   
 
 (defun delegate-command (command-string)
-  ;(princ command-string)
+										;(princ command-string)
+  (message (concat "Got stff\n" command-string)))
   (let ((command (json-read-from-string command-string)))
 	(let ((command-type (cdr (assoc 'Command command))))
-	  ;(print command-type)
-	  (cond ((string= command-type "SetAPIVersion") (set-api-version (cdr (assoc 'Arguments command))))
-			((string= command-type "WriteToConsole") (write-to-console (cdr (assoc 'Arguments command))))
-			((string= command-type "SetCodeSuggestions") (write-to-console (cdr (assoc 'Arguments command))))
+				;(print command-type)
+	  (cond ((string= command-type "SetAPIVersion")
+			 (set-api-version (cdr (assoc 'Arguments command))))
+			((string= command-type "WriteToConsole")
+			 (write-to-console (cdr (assoc 'Arguments command))))
+			((string= command-type "SetCodeSuggestions")
+			 (write-line-to-fuse-buffer
+			  "We got code completion"))
 			))))
 
 
