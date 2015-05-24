@@ -52,7 +52,9 @@
 		  ""))
 	""))
 
-  
+(defun command-string-length-including-size (command-string)
+  (length 
+   (concat (number-to-string (length command-string)) "\n" command-string)))
 
 
 
@@ -73,10 +75,15 @@
   (test-pop-command "5\nabc" ""))
 
 
+(defun process-commands-in-buffer (buffer-str)
+  (let ((command (pop-command (setq buffer-string (concat message buffer-string)))))
+	 (setq buffer-string (substring buffer-string (command-string-length-including-size command)))
+	 (delegate-command command)))
 
 (defun plugin-filter (process message)
-  (delegate-command
-   (pop-command (setq buffer-string (concat message buffer-string)))))
+  (progn
+  (setq buffer-string (concat message buffer-string))
+   (process-commands-in-buffer buffer-string)))
 
 
 (defun create-connection ()
