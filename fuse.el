@@ -40,7 +40,7 @@
 
 (defun delegate-command (command-string)
 										;(princ command-string)
-  (message (concat "Got stff\n" command-string)))
+  (message (concat "Got stff\n" command-string))
   (let ((command (json-read-from-string command-string)))
 	(let ((command-type (cdr (assoc 'Command command))))
 				;(print command-type)

@@ -60,9 +60,12 @@
 
 (defun process-commands-in-buffer (buffer-str)
   (let ((command (pop-command-from-string (setq buffer-string (concat message buffer-string)))))
+	(message (concat "Command foooooooooooooooo: \n" command))
 	(if (> (length command) 0)
-	 (progn (setq buffer-string (substring buffer-string (command-string-length-including-size command)))
-	 (delegate-command command)))))
+		(progn
+		  (message "We got a command yo :D")
+		  (setq buffer-string (substring buffer-string (+ (command-string-length-including-size command) 1)))
+		  (delegate-command command)))))
 
 (defun plugin-filter (process message)
   (progn
@@ -111,7 +114,7 @@
 			  (concat
 			   (number-to-string (length command)) "\n")
 			  command)))
-	(print str)
+	;(print str)
 	(process-send-string fuse-client str)))
 
 (defun fuse-status ()  
