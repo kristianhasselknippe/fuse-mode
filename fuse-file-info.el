@@ -30,7 +30,7 @@
 					 (funcall rec (+ offset 1) text)
 				   offset)))))
 	(let ((ret (funcall rec 0 text)))
-	  (print ret)
+	  ;(print ret)
 		  ret)))
 
 (defun get-current-character ()

@@ -32,25 +32,24 @@
 		(string-to-number (cdr
 						   (assoc 'Version (json-read-from-string command-args))))))
 
-(defun write-to-console (command-args)
-  (message command-args)
-  (write-line-to-fuse-buffer (cdr (assoc 'Text (json-read-from-string command-args)))))
 
-  
+(defun display-code-suggestions (command-args)
+  (assoc 'CodeSuggestions (json-read-from-string (cdr command-args))))
 
 (defun delegate-command (command-string)
-										;(princ command-string)
-  (message (concat "Got stff\n" command-string))
   (let ((command (json-read-from-string command-string)))
 	(let ((command-type (cdr (assoc 'Command command))))
 				;(print command-type)
-	  (cond ((string= command-type "SetAPIVersion")
-			 (set-api-version (cdr (assoc 'Arguments command))))
-			((string= command-type "WriteToConsole")
-			 (write-to-console (cdr (assoc 'Arguments command))))
+	  (cond
+	   ;((string= command-type "SetAPIVersion")
+	   ;	 (set-api-version (cdr (assoc 'Arguments command))))
+		;	((string= command-type "WriteToConsole")
+		;	 (write-to-console (cdr (assoc 'Arguments command))))
 			((string= command-type "SetCodeSuggestions")
-			 (write-line-to-fuse-buffer
-			  "We got code completion"))
+			 (progn
+			   (message
+				"We got code completion")
+			   (display-code-suggestions (assoc 'Arguments command))))
 			))))
 
 
@@ -73,3 +72,18 @@
   (send-command (json-encode '((Command . Recompile)))))
 
 ;C-h m
+
+
+;not sure about this one
+(defun fuse-completion-at-point ())
+  (interactive)
+  (let ((pt (point)) ;; collect point
+        start end)
+          (goto-char pt)
+          (re-search-backward "\\S *")
+          (setq start (point))
+          (re-search-forward "\\S *")
+          (setq end (point))
+          (list start end (cdr ())))))
+
+(push 'fuse-completion-at-point completion-at-point-functions)

@@ -9,7 +9,6 @@
 
 (defvar fuse-client)
 
-
 (defvar buffer-string "")
 
 (defun string-integer-p (string)
@@ -53,24 +52,22 @@
 	""))
 
 (defun command-string-length-including-size (command-string)
-  (length 
+  (length
    (concat (number-to-string (length command-string)) "\n" command-string)))
 
 
 
 (defun process-commands-in-buffer (buffer-str)
-  (let ((command (pop-command-from-string (setq buffer-string (concat message buffer-string)))))
-	(message (concat "Command foooooooooooooooo: \n" command))
-	(if (> (length command) 0)
+  (let ((command-string (pop-command-from-string buffer-str)))
+	(if (> (length command-string) 0)
 		(progn
-		  (message "We got a command yo :D")
-		  (setq buffer-string (substring buffer-string (+ (command-string-length-including-size command) 1)))
-		  (delegate-command command)))))
+		  (setq buffer-string
+				(substring buffer-string (command-string-length-including-size command-string)))
+		  (delegate-command command-string)))))
 
 (defun plugin-filter (process message)
-  (progn
-	(setq buffer-string (concat buffer-string message))
-	(process-commands-in-buffer buffer-string)))
+  (setq buffer-string (concat buffer-string message))
+  (process-commands-in-buffer buffer-string))
 
 
 (defun create-connection ()
