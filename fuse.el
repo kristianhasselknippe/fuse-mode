@@ -1,4 +1,5 @@
 (load-file "fuse-communication.el")
+(load-file "fuse-file-info.el")
 
 (defvar api-version)
 
@@ -19,12 +20,11 @@
 
 
 (defun write-to-fuse-buffer (str)
-	(save-excursion
-	  (set-buffer (process-buffer fuse-client))
-	  (insert (format "[GOT] %s" (prin1-to-string str)))))
+  ;(with-output-to-buffer "*fuse-plugin*"
+	  (message str))
 
 (defun write-line-to-fuse-buffer (str)
-  (write-to-fuse-buffer (concat (prin1-to-string str) "\n")))
+  (write-to-fuse-buffer str))
 
 
 (defun set-api-version (command-args)
@@ -36,21 +36,24 @@
 (defun display-code-suggestions (command-args)
   (assoc 'CodeSuggestions (json-read-from-string (cdr command-args))))
 
+(defun write-to-console (command-args))
+  ;(write-line-to-fuse-buffer (cdr (assoc 'Text (json-read-from-string command-args)))))
+
 (defun delegate-command (command-string)
   (let ((command (json-read-from-string command-string)))
 	(let ((command-type (cdr (assoc 'Command command))))
-				;(print command-type)
+										;(print command-type)
 	  (cond
-	   ;((string= command-type "SetAPIVersion")
-	   ;	 (set-api-version (cdr (assoc 'Arguments command))))
-		;	((string= command-type "WriteToConsole")
-		;	 (write-to-console (cdr (assoc 'Arguments command))))
-			((string= command-type "SetCodeSuggestions")
-			 (progn
-			   (message
-				"We got code completion")
-			   (display-code-suggestions (assoc 'Arguments command))))
-			))))
+										;((string= command-type "SetAPIVersion")
+										;	 (set-api-version (cdr (assoc 'Arguments command))))
+	   ((string= command-type "WriteToConsole")
+		(write-to-console (cdr (assoc 'Arguments command))))
+	   ((string= command-type "SetCodeSuggestions")
+		(progn
+		  (message
+		   "We got code completion")
+		  (display-code-suggestions (assoc 'Arguments command))))
+	   ))))
 
 
 (defun set-features ()
@@ -75,15 +78,15 @@
 
 
 ;not sure about this one
-(defun fuse-completion-at-point ())
-  (interactive)
-  (let ((pt (point)) ;; collect point
-        start end)
-          (goto-char pt)
-          (re-search-backward "\\S *")
-          (setq start (point))
-          (re-search-forward "\\S *")
-          (setq end (point))
-          (list start end (cdr ())))))
-
-(push 'fuse-completion-at-point completion-at-point-functions)
+;(noop (defun fuse-completion-at-point ())
+;  (interactive)
+;  (let ((pt (point)) ;; collect point
+;        start end)
+;          (goto-char pt)
+;          (re-search-backward "\\S *")
+;          (setq start (point))
+;          (re-search-forward "\\S *")
+;          (setq end (point))
+;          (list start end (cdr ())))
+;
+;(push 'fuse-completion-at-point completion-at-point-functions))
