@@ -63,7 +63,9 @@
 		(progn
 		  (setq buffer-string
 				(substring buffer-string (command-string-length-including-size command-string)))
-		  (delegate-command command-string)))))
+		  (delegate-command command-string)
+		  (if (> (length buffer-string) 0)
+			  (process-commands-in-buffer buffer-string))))))
 
 (defun plugin-filter (process message)
   (setq buffer-string (concat buffer-string message))
@@ -85,7 +87,7 @@
   (stop-process fuse-client))
 
 (defun plugin-sentinel (process msg)
-  
+
   )
 
 (defun get-length-part (str)
@@ -114,5 +116,5 @@
 	;(print str)
 	(process-send-string fuse-client str)))
 
-(defun fuse-status ()  
+(defun fuse-status ()
   (process-status fuse-client))
