@@ -36,7 +36,8 @@
 (defun display-code-suggestions (command-args)
   (assoc 'CodeSuggestions (json-read-from-string (cdr command-args))))
 
-(defun write-to-console (command-args))
+(defun write-to-console (command-args)
+  (message (cdr (assoc 'Text (json-read-from-string command-args)))))
   ;(write-line-to-fuse-buffer (cdr (assoc 'Text (json-read-from-string command-args)))))
 
 (defun delegate-command (command-string)
@@ -50,6 +51,7 @@
 		(write-to-console (cdr (assoc 'Arguments command))))
 	   ((string= command-type "SetCodeSuggestions")
 		(progn
+		  (write-to-console command)
 		  (message
 		   "We got code completion")
 		  (display-code-suggestions (assoc 'Arguments command))))
