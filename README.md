@@ -23,7 +23,7 @@ to derive from these.
 
 Code completion currently does nothing with the result. We could make a backend for AC or Company.
 
-## fuse.el: (delegate-command (command-string)
+## fuse.el: (delegate-command (command-string))
 All incoming responses are filtered through this function.
 Currently only WirteToConsole and SetCodeSuggestions are filtered.
 
