@@ -38,7 +38,23 @@
 
 (defun write-to-console (command-args)
   (message (cdr (assoc 'Text (json-read-from-string command-args)))))
-  ;(write-line-to-fuse-buffer (cdr (assoc 'Text (json-read-from-string command-args)))))
+										;(write-line-to-fuse-buffer (cdr (assoc 'Text (json-read-from-string command-args)))))
+
+(defun open-definition-in-new-buffer (path line)
+  (progn
+	(message (concat "path: " path))
+	(message (number-to-string line))
+	(set-buffer (find-file path))
+	(goto-char 0)
+	(forward-line line)))
+
+(defun goto-definition (command-args)
+  (setq testtest command-args)
+  (let ((args (json-read-from-string command-args)))
+	(if (cdr (assoc 'FoundDefinition args))
+		(let ((path (cdr (assoc 'Path args)))
+			  (line (cdr (assoc 'Line (assoc 'CaretPosition args)))))
+		  (open-definition-in-new-buffer path line)))))
 
 (defun delegate-command (command-string)
   (let ((command (json-read-from-string command-string)))
@@ -51,7 +67,7 @@
 	   ((string= command-type "WriteToConsole")
 		(write-to-console (cdr (assoc 'Arguments command))))
 	   ((string= command-type "GoToDefinitionResponse")
-		(message command-string))
+		(goto-definition (cdr (assoc 'Arguments command))))
 	   ((string= command-type "SetCodeSuggestions")
 		(progn
 		  (write-to-console command)
