@@ -43,12 +43,15 @@
 (defun delegate-command (command-string)
   (let ((command (json-read-from-string command-string)))
 	(let ((command-type (cdr (assoc 'Command command))))
+	  (message command-type)
 										;(print command-type)
 	  (cond
 										;((string= command-type "SetAPIVersion")
 										;	 (set-api-version (cdr (assoc 'Arguments command))))
 	   ((string= command-type "WriteToConsole")
 		(write-to-console (cdr (assoc 'Arguments command))))
+	   ((string= command-type "GoToDefinitionResponse")
+		(message command-string))
 	   ((string= command-type "SetCodeSuggestions")
 		(progn
 		  (write-to-console command)
@@ -65,7 +68,7 @@
 
 (defun send-request-code-completion ()
   (interactive)
-  (send-command (get-code-completion-info)))
+  (send-command (get-code-completion-info 'RequestCodeCompletion)))
 
 
 (defun send-new-build ()
@@ -75,6 +78,11 @@
 (defun send-recompile ()
   (interactive)
   (send-command (json-encode '((Command . Recompile)))))
+
+(defun send-goto-definition()
+  (interactive)
+  (send-command (get-code-completion-info 'GotoDefinition)))
+
 
 ;C-h m
 

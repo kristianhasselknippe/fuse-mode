@@ -24,7 +24,7 @@
 (defun get-dist-from-new-line (current-point text)
   (let ((rec (lambda (offset text)
 			   (progn
-				 (print (aref text (- current-point offset)))
+				 ;(print (aref text (- current-point offset)))
 				 (if (not (or (<= (- current-point offset) 0)
 							  (char-equal (aref text (- current-point offset)) ?\n)))
 					 (funcall rec (+ offset 1) text)
@@ -39,7 +39,7 @@
 	(let ((current-point (point)))
 	  (get-dist-from-new-line current-point text))))
 
-(defun get-code-completion-info ()
+(defun get-code-completion-info (command-name)
   (interactive)
   (let ((ret
 		 (let ((id 1)
@@ -48,12 +48,12 @@
 			   (type (get-current-type))
 			   (c-line (get-current-line))
 			   (c-character (get-current-character)))
-		   (json-encode `((Command . RequestCodeCompletion)
+		   (json-encode `((Command . ,command-name)
 						  (Arguments .
 									 ((QueryId . ,id)
 									  (Path . ,path)
 									  (Text . ,text)
 									  (Type . ,type)
 									  (CaretPosition . ((Line . ,c-line) (Character . ,c-character))))))))))
-	
+
 	ret))
