@@ -31,8 +31,15 @@
 (defun display-code-suggestions (command-args)
   (assoc 'CodeSuggestions (json-read-from-string (cdr command-args))))
 
-(defun write-to-console (command-args)
-  (message (cdr (assoc 'Text (json-read-from-string command-args)))))
+(defun write-to-console (command)
+  (message "sodowidjqowdijqwdoiqjwdoqijwdoqwidj")
+  (let ((command-args (json-read-from-string command)))
+	(let ((log-type (cdr (assoc 'Type command-args)))
+		  (text (cdr (assoc 'Text command-args))))
+	  (message "aspokaspdok")
+	  (cond
+	   ((string= log-type "DebugLog")(fuse-write-to-debug-log text))
+	   ((string= log-type "BuildLog")(fuse-write-to-build-log text))))))
 										;(write-line-to-fuse-buffer (cdr (assoc 'Text (json-read-from-string command-args)))))
 
 (defun open-definition-in-new-buffer (path line)
@@ -44,7 +51,6 @@
 	(forward-line line)))
 
 (defun goto-definition (command-args)
-  (setq testtest command-args)
   (let ((args (json-read-from-string command-args)))
 	(if (cdr (assoc 'FoundDefinition args))
 		(let ((path (cdr (assoc 'Path args)))
@@ -52,23 +58,16 @@
 		  (open-definition-in-new-buffer path line)))))
 
 (defun delegate-command (command-string)
+  (message command-string)
   (let ((command (json-read-from-string command-string)))
 	(let ((command-type (cdr (assoc 'Command command))))
-	  (message command-type)
-										;(print command-type)
 	  (cond
-										;((string= command-type "SetAPIVersion")
-										;	 (set-api-version (cdr (assoc 'Arguments command))))
 	   ((string= command-type "WriteToConsole")
 		(write-to-console (cdr (assoc 'Arguments command))))
 	   ((string= command-type "GoToDefinitionResponse")
 		(goto-definition (cdr (assoc 'Arguments command))))
 	   ((string= command-type "SetCodeSuggestions")
-		(progn
-		  (write-to-console command)
-		  (message
-		   "We got code completion")
-		  (display-code-suggestions (assoc 'Arguments command))))
+		  (display-code-suggestions (cdr (assoc 'Arguments command))))
 	   ))))
 
 
