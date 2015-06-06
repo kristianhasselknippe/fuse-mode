@@ -1,5 +1,7 @@
-(load-file "fuse-communication.el")
-(load-file "fuse-file-info.el")
+(load-file "./fuse-communication.el")
+(load-file "./fuse-file-info.el")
+(load-file "./fuse-send-commands.el")
+(load-file "./fuse-logging.el")
 
 (defvar api-version)
 
@@ -19,13 +21,6 @@
 
 
 
-(defun write-to-fuse-buffer (str)
-  ;(with-output-to-buffer "*fuse-plugin*"
-	  (message str))
-
-(defun write-line-to-fuse-buffer (str)
-  (write-to-fuse-buffer str))
-
 
 (defun set-api-version (command-args)
   (setq api-version
@@ -42,8 +37,8 @@
 
 (defun open-definition-in-new-buffer (path line)
   (progn
-	(message (concat "path: " path))
-	(message (number-to-string line))
+	;(message (concat "path: " path))
+	;(message (number-to-string line))
 	(set-buffer (find-file path))
 	(goto-char 0)
 	(forward-line line)))
@@ -97,7 +92,9 @@
 
 (defun send-goto-definition()
   (interactive)
-  (send-command (get-code-completion-info 'GotoDefinition)))
+  (let ((cmd (get-code-completion-info 'GotoDefinition)))
+	;(message cmd)
+	(send-command cmd)))
 
 
 ;C-h m

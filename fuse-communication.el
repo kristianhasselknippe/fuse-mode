@@ -79,7 +79,7 @@
 		 :family 'ipv4
 		 :host listen-host
 		 :service listen-port
-		 :buffer "*fuse-plugin*"
+		 ;:buffer "*fuse-plugin*"
 		 :sentinel 'plugin-sentinel
 		 :filter 'plugin-filter)))
 
