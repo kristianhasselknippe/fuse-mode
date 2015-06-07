@@ -67,7 +67,9 @@
 	   ((string= command-type "GoToDefinitionResponse")
 		(goto-definition (cdr (assoc 'Arguments command))))
 	   ((string= command-type "SetCodeSuggestions")
-		  (display-code-suggestions (cdr (assoc 'Arguments command))))
+		(display-code-suggestions (cdr (assoc 'Arguments command))))
+	   ((string= command-type "BuildEventRaised")
+		(write-build-event (json-read-from-string (cdr (assoc 'Arguments command)))))
 	   ))))
 
 
