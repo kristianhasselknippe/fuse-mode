@@ -1,4 +1,4 @@
-# fuse-emacs
+# fuse-mode
 Emacs plugin for Fuse
 
 
