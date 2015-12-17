@@ -42,10 +42,10 @@
 		  (setq event-type (get-current-symbol))
 		  (get-next-char)
 		  (get-current-symbol)
-		  (list event-type (parse-message-length event-type))
+		  event-type)
 	  -1)))
 
-(defun parse-message-length (event-type)
+(defun parse-message-length ()
   (let (c)
 	(while (and (not (eq c ?\n)) (not (eq c -1)))
 	  (setq c (get-next-char)))
@@ -55,7 +55,7 @@
 		  (setq m-len (string-to-number current-sym))
 		  (get-next-char)
 		  (get-current-symbol)
-		  ((parse-message m-len))
+		  m-len)
 	  -1)))
 
 
@@ -74,8 +74,15 @@
   (setq buffer-string (concat buffer-string message))
   (process-commands-in-buffer buffer-string))
 
+(defun fuse-client-parse ()
+  (let (event-type length message)
+	(setq event-type (parse-event-type))
+	(setq length (parse-message-length))
+	(setq message (parse-message length))
+
+	(format "Result: %s, %d, %s" event-type length message)))
 
 
 (defun test-fuse-mode ()
   (testing-reset)
-  (format "Result: %s" (parse-event-type)))
+  (fuse-client-parse))
