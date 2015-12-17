@@ -3,9 +3,12 @@
 (defvar current-sym-pointer 0)
 
 (defun testing-reset ()
-  (setq buffer-string "foobar\n4\nfarmasdok")
+  (setq buffer-string "foobar\n5\nfarmaother\n10\nonetwothreefourfivesix")
   (setq buffer-pointer -1)
   (setq current-sym-pointer 0))
+
+(defun print-fuse-mode ()
+  (print (format "BS: %s, BP: %d, CSP: %d" buffer-string buffer-pointer current-sym-pointer)))
 
 (defun char-to-number (char)
   (string-to-number (char-to-string char)))
@@ -27,7 +30,6 @@
   (let (ret)
 	(setq ret (substring buffer-string current-sym-pointer buffer-pointer))
 	(setq current-sym-pointer buffer-pointer)
-	(print (format "Symbol %s" ret))
 	ret))
 
 
@@ -37,31 +39,32 @@
 	  (setq c (get-next-char)))
 	(if (equal c ?\n)
 		(let (event-type)
-		  (backtrack-1)
 		  (setq event-type (get-current-symbol))
 		  (get-next-char)
-		  (parse-message-length event-type))
+		  (get-current-symbol)
+		  (list event-type (parse-message-length event-type))
 	  -1)))
 
 (defun parse-message-length (event-type)
   (let (c)
 	(while (and (not (eq c ?\n)) (not (eq c -1)))
-	  (setq c (get-next-char))
-	  (if (equal c ?\n)
-		  (let (m-len current-sym)
-			(backtrack-1)
-			(setq current-sym (get-current-symbol))
-			(setq m-len (string-to-number current-sym))
-			(get-next-char)
-			(parse-message m-len))
-		-1))))
+	  (setq c (get-next-char)))
+	(if (equal c ?\n)
+		(let (m-len current-sym)
+		  (setq current-sym (get-current-symbol))
+		  (setq m-len (string-to-number current-sym))
+		  (get-next-char)
+		  (get-current-symbol)
+		  ((parse-message m-len))
+	  -1)))
 
 
 (defun parse-message (message-length)
   (if (>= (- (length buffer-string) buffer-pointer) message-length)
-	  (progn
+	  (let (ret)
 		(setq buffer-pointer (+ buffer-pointer message-length))
-		(get-current-symbol))
+		(setq ret (get-current-symbol))
+		ret)
 	-1))
 
 
@@ -70,3 +73,9 @@
 (defun plugin-filter (process message)
   (setq buffer-string (concat buffer-string message))
   (process-commands-in-buffer buffer-string))
+
+
+
+(defun test-fuse-mode ()
+  (testing-reset)
+  (format "Result: %s" (parse-event-type)))
