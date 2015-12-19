@@ -3,7 +3,7 @@
 (defvar current-sym-pointer 0)
 
 (defun testing-reset ()
-  (setq buffer-string "foobar\n5\nfarmaother\n10\nonetwothreefourfivesix")
+  (setq buffer-string "")
   (setq buffer-pointer -1)
   (setq current-sym-pointer 0))
 
@@ -14,23 +14,25 @@
   (string-to-number (char-to-string char)))
 
 (defun get-next-char ()
-  (if (= buffer-pointer (1- (length buffer-string)))
+  (if (>= buffer-pointer (1- (length buffer-string)))
 	  -1
 	(aref buffer-string (setq buffer-pointer (1+ buffer-pointer)))))
 
 (defun peek-next-char ()
   (if (< buffer-pointer (1- (length buffer-string)))
 	  (aref buffer-string (+ buffer-pointer))
-	-1 ))
+	-1))
 
 (defun backtrack-1 ()
   (setq buffer-pointer (1- buffer-pointer)))
 
 (defun get-current-symbol ()
-  (let (ret)
-	(setq ret (substring buffer-string current-sym-pointer buffer-pointer))
-	(setq current-sym-pointer buffer-pointer)
-	ret))
+  (if (>= current-sym-pointer buffer-pointer)
+	  -1
+	(let (ret)
+	  (setq ret (substring buffer-string current-sym-pointer buffer-pointer))
+	  (setq current-sym-pointer buffer-pointer)
+	  ret)))
 
 
 (defun parse-event-type ()
@@ -67,18 +69,18 @@
 		ret)
 	-1))
 
-(defun plugin-filter (process message)
-  (setq buffer-string (concat buffer-string message))
-  (process-commands-in-buffer buffer-string))
+(defun fuse-message-parser-add (message)
+  (setq buffer-string (concat buffer-string message)))
 
 (defun fuse-client-parse ()
   (let (event-type length message)
 	(setq event-type (parse-event-type))
 	(setq length (parse-message-length))
 	(setq message (parse-message length))
+	(if (or (equal event-type -1) (equal length -1) (equal message -1))
+		-1
+	  (list event-type message))))
 
-	(format "Result: %s, %d, %s" event-type length message)
-	(list event-type message)))
 
 
 (defun test-fuse-mode ()
