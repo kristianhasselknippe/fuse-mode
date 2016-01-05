@@ -15,7 +15,7 @@
   (create-message "Request"
 				  (create-command 'Subscribe 0 'Fuse.BuildStarted json-false 0)))
 
-(defun create-reqeust-build-issue-detected ()
+(defun create-request-build-issue-detected ()
   (create-message "Request"
 				  (create-command 'Subscribe 0 'Fuse.BuildIssueDetected json-false 0)))
 

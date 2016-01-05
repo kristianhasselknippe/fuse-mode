@@ -19,13 +19,17 @@
 				 "fuse-mode")
   (set-process-filter (get-process "fuse-emacs") 'fuse-client-filter))
 
+(defun fuse-client-send-command (command-string)
+  (process-send-string (get-process "fuse-emacs") command-string))
+
+
 
 (defun fuse-mode ()
   (interactive)
   (fuse-create-client)
   (process-send-string
    (get-process "fuse-emacs")
-   (create-reqeust-build-issue-detected))
+   (create-request-build-issue-detected))
   (process-send-string
    (get-process "fuse-emacs")
    (create-request-build-started)))
