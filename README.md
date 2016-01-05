@@ -20,3 +20,4 @@ to derive from these.
 - Code completion
 - Project management (new project, creating files ...)
 - Starting previews
+- Selection
