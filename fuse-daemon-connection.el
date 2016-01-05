@@ -1,10 +1,9 @@
-(load-file "fuse-message-parser.el")
-(load-file "fuse-message-decoder.el")
-(load-file "fuse-messages.el")
+(load-file "~/fuse-mode/fuse-message-parser.el")
+(load-file "~/fuse-mode/fuse-message-decoder.el")
+(load-file "~/fuse-mode/fuse-messages.el")
 
 (defun fuse-client-filter (proc string)
   (fuse-message-parser-add string)
-  (print string)
   (let (ret)
 	(while (not (equal ret -1))
 	  (setq ret (fuse-client-parse))
@@ -22,6 +21,7 @@
 
 
 (defun fuse-mode ()
+  (interactive)
   (fuse-create-client)
   (process-send-string
    (get-process "fuse-emacs")
@@ -35,4 +35,5 @@
   (fuse-mode)
   (process-send-string (get-process "fuse-emacs") "Request\n104\n{\"Name\":\"Subscribe\",\"Id\":0,\"Arguments\":{\"Filter\":\"Fuse.BuildStarted\",\"Replay\":false,\"SubscriptionId\":0}}"))
 
-(fuse-mode-test)
+
+(provide 'fuse.mode)
