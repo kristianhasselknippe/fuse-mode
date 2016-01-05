@@ -21,3 +21,8 @@ to derive from these.
 - Project management (new project, creating files ...)
 - Starting previews
 - Selection
+
+
+## Licence
+
+GPL v2
