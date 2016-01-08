@@ -22,6 +22,13 @@
 
 (defun fuse-selection-changed ()
   (interactive)
-  (fuse-client-send-command (create-selection-changed-message)))
+  ; have to do it two times for some reason :S
+  (progn
+	(fuse-client-send-command (create-selection-changed-message))
+	(fuse-client-send-command (create-selection-changed-message))))
+
+(defun fuse-test-fuse-selection-changed ()
+  (interactive)
+  (princ (create-selection-changed-message)))
 
 (buffer-file-name)
