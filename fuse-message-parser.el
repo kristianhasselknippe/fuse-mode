@@ -79,7 +79,7 @@
 	(setq message (parse-message length))
 	(if (or (equal event-type -1) (equal length -1) (equal message -1))
 		-1
-	  (list event-type message))))
+		(list event-type message))))
 
 
 

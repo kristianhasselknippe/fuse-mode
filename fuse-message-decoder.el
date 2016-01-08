@@ -11,10 +11,10 @@
   (fuse-clear-error-log))
 
 (defun fuse-decode-message (message)
+  (message message)
   (let (name data)
 	(setq data (json-read-from-string message))
 	(setq name (cdr (assq 'Name data)))
-	;(message (concat "name: " name))
 	(cond
 	 ((equal name "Fuse.BuildIssueDetected")
 	  (fuse-build-issue-detected (assq 'Data data)))

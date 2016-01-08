@@ -12,7 +12,11 @@
 											 				 :Character ,(fuse--get-current-caret-character)))))))
 
 (defun fuse--get-code-completion ()
-  (fuse-client-send-command (fuse--create-get-completion-message)))
+  (interactive)
+  (let (m)
+	(setq  m (fuse--create-get-completion-message))
+	(message m)
+	(fuse-client-send-command m)))
 
 ;{
 ;    "Id": 42, // Unique request id
