@@ -1,88 +1,28 @@
-(defvar buffer-string "")
-(defvar buffer-pointer -1)
-(defvar current-sym-pointer 0)
+(defvar fuse--buffer-string "")
+(defvar fuse--buffer-pointer 0)
+(defvar fuse--symbol-pointer 0)
 
-(defun testing-reset ()
-  (setq buffer-string "")
-  (setq buffer-pointer -1)
-  (setq current-sym-pointer 0))
+(defun fuse--get-next-character ()
+  (if (equal fuse--buffer-pointer (1- (length fuse--buffer-string)))
+	  nil
+	(progn
+	  (setq fuse--buffer-pointer (1+ fuse--buffer-pointer))
+	  (aref fuse--buffer-string fuse--buffer-pointer))))
 
-(defun print-fuse-mode ()
-  (print (format "BS: %s, BP: %d, CSP: %d" buffer-string buffer-pointer current-sym-pointer)))
+(defun fuse--get-current-character ()
+  (if (equal fuse--buffer-pointer (length fuse--buffer-string))
+	  nil
+	(aref fuse--buffer-string fuse--buffer-pointer)))
 
-(defun char-to-number (char)
-  (string-to-number (char-to-string char)))
+(defun fuse--parse-line ()
+  (while (not (equal ?\n (fuse--get-next-character))
 
-(defun get-next-char ()
-  (if (>= buffer-pointer (1- (length buffer-string)))
-	  -1
-	(aref buffer-string (setq buffer-pointer (1+ buffer-pointer)))))
-
-(defun peek-next-char ()
-  (if (< buffer-pointer (1- (length buffer-string)))
-	  (aref buffer-string (+ buffer-pointer))
-	-1))
-
-(defun backtrack-1 ()
-  (setq buffer-pointer (1- buffer-pointer)))
-
-(defun get-current-symbol ()
-  (if (>= current-sym-pointer buffer-pointer)
-	  -1
-	(let (ret)
-	  (setq ret (substring buffer-string current-sym-pointer buffer-pointer))
-	  (setq current-sym-pointer buffer-pointer)
-	  ret)))
-
-
-(defun parse-event-type ()
-  (let (c)
-	(while (and (not (eq c ?\n)) (not (eq c -1)))
-	  (setq c (get-next-char)))
-	(if (equal c ?\n)
-		(let (event-type)
-		  (setq event-type (get-current-symbol))
-		  (get-next-char)
-		  (get-current-symbol)
-		  event-type)
-	  -1)))
-
-(defun parse-message-length ()
-  (let (c)
-	(while (and (not (eq c ?\n)) (not (eq c -1)))
-	  (setq c (get-next-char)))
-	(if (equal c ?\n)
-		(let (m-len current-sym)
-		  (setq current-sym (get-current-symbol))
-		  (setq m-len (string-to-number current-sym))
-		  (get-next-char)
-		  (get-current-symbol)
-		  m-len)
-	  -1)))
-
-
-(defun parse-message (message-length)
-  (if (>= (- (length buffer-string) buffer-pointer) message-length)
-	  (let (ret)
-		(setq buffer-pointer (+ buffer-pointer message-length))
-		(setq ret (get-current-symbol))
-		ret)
-	-1))
-
-(defun fuse-message-parser-add (message)
-  (setq buffer-string (concat buffer-string message)))
+(defun fuse--parse-payload ()
+  )
 
 (defun fuse-client-parse ()
-  (let (event-type length message)
-	(setq event-type (parse-event-type))
-	(setq length (parse-message-length))
-	(setq message (parse-message length))
-	(if (or (equal event-type -1) (equal length -1) (equal message -1))
-		-1
-		(list event-type message))))
+  )
 
 
 
-(defun test-fuse-mode ()
-  (testing-reset)
-  (fuse-client-parse))
+;(list event-type message)
