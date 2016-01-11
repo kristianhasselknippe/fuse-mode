@@ -2,6 +2,9 @@
   (setq fuse--buffer-pointer -1)
   (setq fuse--symbol-pointer 0))
 
+(defun fuse--test-parse-line ()
+  )
+
 
 
 (defun fuse--set-buffer-string-test ()
