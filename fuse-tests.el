@@ -1,6 +1,67 @@
-(defun fuse--reset-for-testing ()
-  (setq fuse--buffer-pointer -1)
-  (setq fuse--symbol-pointer 0))
+(defun fuse--reset-for-testing (buffer-str sym-ptr buffer-ptr)
+  (setq fuse--buffer-string buffer-str)
+  (setq fuse--buffer-pointer buffer-ptr)
+  (setq fuse--symbol-pointer sym-ptr))
+
+
+
+(ert-deftest fuse--test-get-current-symbol ()
+  "Tests whether get current symbol works"
+  (fuse--reset-for-testing "galskapogvin" 0 7)
+  (should (equal (fuse--get-current-symbol) "galskap"))
+  (should (equal fuse--symbol-pointer 7)))
+
+(ert-deftest fuse--test-parse-line ()
+  (fuse--reset-for-testing "foobar\n" 0 -1)
+  (should (equal (fuse--parse-line) "foobar")))
+
+(ert-deftest fuse--text-parse-line-1 ()
+  (fuse--reset-for-testing "foobar" 0 -1)
+  (should (equal (fuse--parse-line) nil)))
+
+(ert-deftest fuse--test-parse-line-2 ()
+  (fuse--reset-for-testing "foobar\nbarbar\n" 0 -1)
+  (should (equal (fuse--parse-line) "foobar"))
+  (should (equal (fuse--parse-line) "barbar")))
+
+(ert-deftest fuse--text-parse-line-3 ()
+  (fuse--reset-for-testing "foobar\nbarbar" 0 -1)
+  (should (equal (fuse--parse-line) "foobar"))
+  (should (equal (fuse--parse-line) nil)))
+
+(ert-deftest fuse--text-parse-line-4 ()
+  (fuse--reset-for-testing "a\nba\ncar\nfart\n" 0 -1)
+  (should (equal (fuse--parse-line) "a"))
+  (should (equal (fuse--parse-line) "ba"))
+  (should (equal (fuse--parse-line) "car"))
+  (should (equal (fuse--parse-line) "fart")))
+
+
+
+(ert-deftest fuse--test-parse-to-character ()
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
+  (should (equal (fuse--parse-to-character ?g) ?g))
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
+  (should (equal (fuse--parse-to-character ?a) ?a))
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
+  (should (equal (fuse--parse-to-character ?c) ?c))
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
+  (should (equal (fuse--parse-to-character ?f) ?f))
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
+  (should (equal (fuse--parse-to-character ?o) ?o))
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
+  (should (equal (fuse--parse-to-character ?p) ?p))
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
+  (should (equal (fuse--parse-to-character ?r) nil))
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
+  (should (equal (fuse--parse-to-character ?q) nil))
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
+  (should (equal (fuse--parse-to-character ?t) nil))
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
+  (should (equal (fuse--parse-to-character ?w) nil)))
+
+
+
 
 (defun fuse--test-parse-line ()
   )
