@@ -43,11 +43,16 @@
 	nil))
 
 (defun fuse--parse-bytes (nBytes)
-
-  )
+  "Parses nBytes number of characters"
+  (setq fuse--buffer-pointer (+ fuse--buffer-pointer nBytes))
+  (fuse--get-current-symbol))
 
 (defun fuse--parse-message ()
-  )
+  (let (type nBytes payload)
+	(setq type (fuse--parse-line))
+	(setq nBytes (string-to-number (fuse--parse-line)))
+	(setq payload (fuse--parse-bytes nBytes))
+	(list type nBytes payload)))
 
 (defun fuse-client-parse ()
   )
