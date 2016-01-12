@@ -4,15 +4,17 @@
 
 (defun fuse--get-next-character ()
   "Increments the buffer pointer and returns the character pointed to"
-  (if (equal fuse--buffer-pointer (1- (length fuse--buffer-string)))
-	  nil
-	(progn
-	  (setq fuse--buffer-pointer (1+ fuse--buffer-pointer))
-	  (aref fuse--buffer-string fuse--buffer-pointer))))
+  (if (> (length fuse--buffer-string) 0)
+	  (if (equal fuse--buffer-pointer (1- (length fuse--buffer-string)))
+		  nil
+		(progn
+		  (setq fuse--buffer-pointer (1+ fuse--buffer-pointer))
+		  (aref fuse--buffer-string fuse--buffer-pointer)))
+	nil))
 
 (defun fuse--get-current-character ()
   "Returns the current character pointed to by buffer pointer"
-  (if (< fuse--buffer-pointer (length fuse--buffer-string))
+  (if (equal fuse--buffer-pointer (length fuse--buffer-string))
 	  nil
 	(aref fuse--buffer-string fuse--buffer-pointer)))
 
@@ -53,13 +55,17 @@
   (setq fuse--symbol-pointer 0))
 
 (defun fuse--parse-message ()
-  (let (type nBytes payload)
-	(setq type (fuse--parse-line))
-	(setq nBytes (string-to-number (fuse--parse-line)))
-	(setq payload (fuse--parse-bytes nBytes))
+  (let* ((type (fuse--parse-line))
+		 (nBytes-tmp (fuse--parse-line))
+		 (nBytes (if (not (equal nil nBytes-tmp))
+					 (string-to-number nBytes-tmp)
+				   nil))
+		 (payload (if (not (equal nil nBytes))
+					  (fuse--parse-bytes nBytes)
+					nil)))
 	(if (not (or (equal nil type)
-				(equal nil nBytes)
-				(equal nil payload)))
+				 (equal nil nBytes)
+				 (equal nil payload)))
 		(progn
 		  (fuse--consume-buffer-to-ptr)
 		  (list type nBytes payload))
@@ -73,5 +79,5 @@
 (defun fuse--client-parse-all-messages ()
   (let ((message (fuse--parse-message)))
 	(while (not (equal message nil))
-	  (fuse--decode-message message)
+	  ;(fuse--decode-message message)
 	  (setq message (fuse--parse-message)))))

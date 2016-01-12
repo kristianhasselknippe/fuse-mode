@@ -4,6 +4,19 @@
   (setq fuse--symbol-pointer sym-ptr))
 
 
+(ert-deftest fuse--test-get-next-character ()
+  (fuse--reset-for-testing "foobar" 0 0)
+  (fuse--get-next-character)
+  (should (equal fuse--buffer-pointer 1))
+  (should (equal (fuse--get-current-character) ?o)))
+;(ert-deftest fuse--test-get-next-character-1 ()
+;  (fuse--reset-for-testing "foobar" 0 0))
+;(ert-deftest fuse--test-get-next-character-2 ()
+;  (fuse--reset-for-testing "foobar" 0 0))
+;(ert-deftest fuse--test-get-next-character-3 ()
+;  (fuse--reset-for-testing "foobar" 0 0))
+;(ert-deftest fuse--test-get-next-character-4 ()
+;  (fuse--reset-for-testing "foobar" 0 0))
 
 (ert-deftest fuse--test-get-current-symbol ()
   (fuse--reset-for-testing "galskapogvin" 0 7)
