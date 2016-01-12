@@ -3,13 +3,8 @@
 (load-file "~/fuse-mode/fuse-messages.el")
 
 (defun fuse-client-filter (proc string)
-  (fuse-message-parser-add string)
-  (let (ret)
-	(while (not (equal ret -1))
-	  (setq ret (fuse-client-parse))
-	  (if (not (equal ret -1))
-		  (progn
-			(fuse-decode-message (nth 1 ret)))))))
+  (fuse--add-string-to-buffer string)
+  (fuse--client-parse-all-messages))
 
 (defun fuse-get-client-process ()
   (get-process "fuse-emacs"))

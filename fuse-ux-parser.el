@@ -41,4 +41,4 @@
 		  (not (equal (fuse--ux-read-current-char) nil)))
 	(fuse--ux-read-next-char))
   (if (equal char fuse--ux-read-current-char)
-	  ; then this is where we start working stuff yo :)
+	  ;; foo
