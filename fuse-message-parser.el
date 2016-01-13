@@ -1,29 +1,34 @@
 (defvar fuse--buffer-string "")
 (defvar fuse--buffer-pointer -1)
-(defvar fuse--symbol-pointer -1)
-
-(defun fuse--get-next-character ()
-  "Increments the buffer pointer and returns the character pointed to"
-  (if (> (length fuse--buffer-string) 0)
-	  (if (equal fuse--buffer-pointer (1- (length fuse--buffer-string)))
-		  nil
-		(progn
-		  (setq fuse--buffer-pointer (1+ fuse--buffer-pointer))
-		  (aref fuse--buffer-string fuse--buffer-pointer)))
-	nil))
+(defvar fuse--symbol-pointer 0)
 
 (defun fuse--get-current-character ()
   "Returns the current character pointed to by buffer pointer"
-  (if (equal fuse--buffer-pointer (length fuse--buffer-string))
+  (if (or (< fuse--buffer-pointer 0)
+		  (>= fuse--buffer-pointer (length fuse--buffer-string)))
 	  nil
 	(aref fuse--buffer-string fuse--buffer-pointer)))
 
+(defun fuse--get-next-character ()
+  "Increments the buffer pointer and returns the character pointed to"
+  (if (or (equal (length fuse--buffer-string) 0)
+		  (>= fuse--buffer-pointer (1- (length fuse--buffer-string)))
+		  (< fuse--buffer-pointer -1))
+	  nil
+	(progn
+		  (setq fuse--buffer-pointer (1+ fuse--buffer-pointer))
+		  (aref fuse--buffer-string fuse--buffer-pointer))))
+
 (defun fuse--get-current-symbol ()
   "Gets the current symbol and sets the symbol pointer equal to buffer pointer"
-  (let (ret)
-	(setq ret (substring fuse--buffer-string fuse--symbol-pointer fuse--buffer-pointer))
-	(setq fuse--symbol-pointer fuse--buffer-pointer)
-	ret))
+  (if (or (>= fuse--symbol-pointer fuse--buffer-pointer)
+		  (< 0 fuse--symbol-pointer)
+		  (>= fuse--buffer-pointer (1- (length fuse--buffer-string))))
+	  nil
+	(let (ret)
+	  (setq ret (substring fuse--buffer-string fuse--symbol-pointer fuse--buffer-pointer))
+	  (setq fuse--symbol-pointer fuse--buffer-pointer)
+	  ret)))
 
 (defun fuse--parse-to-character (char)
   "Parses until the specified character is found"
@@ -51,8 +56,8 @@
 
 (defun fuse--consume-buffer-to-ptr ()
   (setq fuse--buffer-string (substring fuse--buffer-string fuse--buffer-pointer))
-  (setq fuse--buffer-pointer 0)
-  (setq fuse--symbol-pointer 0))
+  (setq fuse--buffer-pointer -1)
+  (setq fuse--symbol-pointer -1))
 
 (defun fuse--parse-message ()
   (let* ((type (fuse--parse-line))
