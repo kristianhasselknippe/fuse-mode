@@ -12,7 +12,3 @@
 
 (defun fuse--decode-message (message)
   (princ message))
-
-
-(fuse--reset-for-testing "Foo\n5\nabcdeBar\n4\nabcd" 0 0)
-(fuse--client-parse-all-messages)

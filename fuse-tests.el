@@ -143,42 +143,64 @@
 
 
 
-(ert-deftest fuse--test-parse-to-character ()
+(ert-deftest fuse--test-parse-to-character-1 ()
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 2)
+  (should (equal (fuse--parse-to-character ?g) ?g)))
+
+(ert-deftest fuse--test-parse-to-character-2 ()
   (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
-  (should (equal (fuse--parse-to-character ?g) ?g))
+  (should (equal (fuse--parse-to-character ?a) ?a)))
+
+(ert-deftest fuse--test-parse-to-character-3 ()
   (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
-  (should (equal (fuse--parse-to-character ?a) ?a))
+  (should (equal (fuse--parse-to-character ?c) ?c)))
+
+(ert-deftest fuse--test-parse-to-character-4 ()
   (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
-  (should (equal (fuse--parse-to-character ?c) ?c))
+  (should (equal (fuse--parse-to-character ?f) ?f)))
+
+(ert-deftest fuse--test-parse-to-character-5 ()
   (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
-  (should (equal (fuse--parse-to-character ?f) ?f))
+  (should (equal (fuse--parse-to-character ?o) ?o)))
+
+(ert-deftest fuse--test-parse-to-character-6 ()
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 5)
+  (should (equal (fuse--parse-to-character ?p) ?p)))
+
+(ert-deftest fuse--test-parse-to-character-7 ()
   (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
-  (should (equal (fuse--parse-to-character ?o) ?o))
+  (should (equal (fuse--parse-to-character ?r) nil)))
+
+(ert-deftest fuse--test-parse-to-character-8 ()
+  (fuse--reset-for-testing "abcdefghijklmnop" 0 4)
+  (should (equal (fuse--parse-to-character ?q) nil)))
+
+(ert-deftest fuse--test-parse-to-character-9 ()
   (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
-  (should (equal (fuse--parse-to-character ?p) ?p))
-  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
-  (should (equal (fuse--parse-to-character ?r) nil))
-  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
-  (should (equal (fuse--parse-to-character ?q) nil))
-  (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
-  (should (equal (fuse--parse-to-character ?t) nil))
+  (should (equal (fuse--parse-to-character ?t) nil)))
+
+(ert-deftest fuse--test-parse-to-character-10 ()
   (fuse--reset-for-testing "abcdefghijklmnop" 0 -1)
   (should (equal (fuse--parse-to-character ?w) nil)))
 
 
-(ert-deftest fuse--test-parse-message ()
+
+
+
+
+(ert-deftest fuse--test-parse-message-1 ()
   (fuse--reset-for-testing "Event\n301\n{\"Name\":\"Fuse.BuildStarted\",\"Data\":{\"BuildType\":\"LoadMarkup\",\"BuildId\":\"f77139bb-d329-4d76-aece-144781e7fc22\",\"BuildTag\":\"Host\",\"PreviewId\":\"af8865ad-7d83-458a-b261-03e03c4be3bf\",\"ProjectPath\":\"/Users/Hassel/FuseProjects/EmacsPlugin/EmacsTest/EmacsTest.unoproj\",\"Target\":\"Unknown\"},\"SubscriptionId\":0}" 0 0)
   (let ((res (fuse--parse-message)))
 	(should (not (equal res nil)))
 	(should (equal 301 (nth 1 res)))))
 
-(ert-deftest fuse--test-parse-message-1 ()
+(ert-deftest fuse--test-parse-message-2 ()
   (fuse--reset-for-testing "Event\n10\nthisismypa" 0 -1)
   (let ((res (fuse--parse-message)))
 	(should (not (equal res nil)))
 	(should (equal "thisismypa" (nth 2 res)))))
 
-(ert-deftest fuse--test-parse-message-2 ()
+(ert-deftest fuse--test-parse-message-3 ()
   (fuse--reset-for-testing "Event\n301\n{\"Name\":\"Fuse.BuildStarted\",\"Data\":{\"BuildType\":\"LoadMarkup\",\"BuildId\":\"f77139bb-d329-4d76-aece-144781e7fc22\",\"BuildTag\":\"Host\",\"PreviewId\":\"af8865ad-7d83-458a-b261-03e03c4be3bf\",\"ProjectPath\":\"/Users/Hassel/FuseProjects/EmacsPlugin/EmacsTest/EmacsTest.unoproj\",\"Target\":\"Unknown\"},\"SubscriptionId\":0}" 0 0)
   (let (message)
 	(setq message (fuse--parse-message))
@@ -186,31 +208,31 @@
 
 
 
-;(ert-deftest fuse--test-parse-message-3 ()
-;  (fuse--reset-for-testing "Event\n301\n{\"Name\":\"Fuse.BuildStarted\",\"Data\":{\"BuildType\":\"LoadMarkup\",\"BuildId\":\"f77139bb-d329-4d76-aece-144781e7fc22\",\"BuildTag\":\"Host\",\"PreviewId\":\"af8865ad-7d83-458a-b261-03e03c4be3bf\",\"ProjectPath\":\"/Users/Hassel/FuseProjects/EmacsPlugin/EmacsTest/EmacsTest.unoproj\",\"Target\":\"Unknown\"},\"SubscriptionId\":0}Event\n301\n{\"Name\":\"Fuse.BuildStarted\",\"Data\":{\"BuildType\":\"LoadMarkup\",\"BuildId\":\"f77139bb-d329-4d76-aece-144781e7fc22\",\"BuildTag\":\"Host\",\"PreviewId\":\"af8865ad-7d83-458a-b261-03e03c4be3bf\",\"ProjectPath\":\"/Users/Hassel/FuseProjects/EmacsPlugin/EmacsTest/EmacsTest.unoproj\",\"Target\":\"Unknown\"},\"SubscriptionId\":0}" 0 0)
-;  (let (message)
-;	(setq message (fuse--parse-message))
-;	(princ message)
-;	(should (equal message '("Event" 301 "{\"Name\":\"Fuse.BuildStarted\",\"Data\":{\"BuildType\":\"LoadMarkup\",\"BuildId\":\"f77139bb-d329-4d76-aece-144781e7fc22\",\"BuildTag\":\"Host\",\"PreviewId\":\"af8865ad-7d83-458a-b261-03e03c4be3bf\",\"ProjectPath\":\"/Users/Hassel/FuseProjects/EmacsPlugin/EmacsTest/EmacsTest.unoproj\",\"Target\":\"Unknown\"},\"SubscriptionId\":0}")))
-;	(setq message (fuse--parse-message))
-;	(should (equal message '("Event" 301 "{\"Name\":\"Fuse.BuildStarted\",\"Data\":{\"BuildType\":\"LoadMarkup\",\"BuildId\":\"f77139bb-d329-4d76-aece-144781e7fc22\",\"BuildTag\":\"Host\",\"PreviewId\":\"af8865ad-7d83-458a-b261-03e03c4be3bf\",\"ProjectPath\":\"/Users/Hassel/FuseProjects/EmacsPlugin/EmacsTest/EmacsTest.unoproj\",\"Target\":\"Unknown\"},\"SubscriptionId\":0}")))
-;	(should (equal fuse--buffer-string ""))))
+(ert-deftest fuse--test-parse-message-4 ()
+  (fuse--reset-for-testing "Event\n301\n{\"Name\":\"Fuse.BuildStarted\",\"Data\":{\"BuildType\":\"LoadMarkup\",\"BuildId\":\"f77139bb-d329-4d76-aece-144781e7fc22\",\"BuildTag\":\"Host\",\"PreviewId\":\"af8865ad-7d83-458a-b261-03e03c4be3bf\",\"ProjectPath\":\"/Users/Hassel/FuseProjects/EmacsPlugin/EmacsTest/EmacsTest.unoproj\",\"Target\":\"Unknown\"},\"SubscriptionId\":0}Event\n301\n{\"Name\":\"Fuse.BuildStarted\",\"Data\":{\"BuildType\":\"LoadMarkup\",\"BuildId\":\"f77139bb-d329-4d76-aece-144781e7fc22\",\"BuildTag\":\"Host\",\"PreviewId\":\"af8865ad-7d83-458a-b261-03e03c4be3bf\",\"ProjectPath\":\"/Users/Hassel/FuseProjects/EmacsPlugin/EmacsTest/EmacsTest.unoproj\",\"Target\":\"Unknown\"},\"SubscriptionId\":0}" 0 0)
+  (let (message)
+	(setq message (fuse--parse-message))
+	(princ message)
+	(should (equal message '("Event" 301 "{\"Name\":\"Fuse.BuildStarted\",\"Data\":{\"BuildType\":\"LoadMarkup\",\"BuildId\":\"f77139bb-d329-4d76-aece-144781e7fc22\",\"BuildTag\":\"Host\",\"PreviewId\":\"af8865ad-7d83-458a-b261-03e03c4be3bf\",\"ProjectPath\":\"/Users/Hassel/FuseProjects/EmacsPlugin/EmacsTest/EmacsTest.unoproj\",\"Target\":\"Unknown\"},\"SubscriptionId\":0}")))
+	(setq message (fuse--parse-message))
+	(should (equal message '("Event" 301 "{\"Name\":\"Fuse.BuildStarted\",\"Data\":{\"BuildType\":\"LoadMarkup\",\"BuildId\":\"f77139bb-d329-4d76-aece-144781e7fc22\",\"BuildTag\":\"Host\",\"PreviewId\":\"af8865ad-7d83-458a-b261-03e03c4be3bf\",\"ProjectPath\":\"/Users/Hassel/FuseProjects/EmacsPlugin/EmacsTest/EmacsTest.unoproj\",\"Target\":\"Unknown\"},\"SubscriptionId\":0}")))
+	(should (equal fuse--buffer-string ""))))
 
 
-(ert-deftest fuse--test-consume-buffer-to-ptr ()
+(ert-deftest fuse--test-consume-buffer-to-ptr-1 ()
   (fuse--reset-for-testing "abcdefghijklmnop" 0 7)
   (fuse--get-current-symbol)
   (fuse--consume-buffer-to-ptr)
   (should (equal fuse--buffer-string "hijklmnop")))
 
 
-(ert-deftest fuse--test-consume-buffer-to-ptr-1 ()
+(ert-deftest fuse--test-consume-buffer-to-ptr-2 ()
   (fuse--reset-for-testing "abcdefghijklmnop" 0 9)
   (fuse--get-current-symbol)
   (fuse--consume-buffer-to-ptr)
   (should (equal fuse--buffer-string "jklmnop")))
 
-(ert-deftest fuse--test-consume-buffer-to-ptr-2 ()
+(ert-deftest fuse--test-consume-buffer-to-ptr-3 ()
   (fuse--reset-for-testing "abcdefghijklmnop" 6 7)
   (fuse--get-current-symbol)
   (fuse--consume-buffer-to-ptr)
@@ -232,12 +254,12 @@
   (fuse--add-string-to-buffer "foobar")
   (should (equal fuse--buffer-string "foobarfoobar")))
 
-;(ert-deftest fuse--test-parse-all-messages ()
-;  (fuse--reset-for-testing "Foo\n5\nabcdeBar\n4\nabcd" 0 0)
-;  (fuse--client-parse-all-messages)
-;  (should (equal "" fuse--buffer-string)))
-;
-;(ert-deftest fuse--test-parse-all-messages-1 ()
-;  (fuse--reset-for-testing "Foo\n5\nabcdeBar\n4\nab" -1 -1)
-;  (fuse--client-parse-all-messages)
-;  (should (equal "Bar\n4\nab" fuse--buffer-string)))
+(ert-deftest fuse--test-parse-all-messages-1 ()
+  (fuse--reset-for-testing "Foo\n5\nabcdeBar\n4\nabcd" 0 0)
+  (fuse--client-parse-all-messages)
+  (should (equal "" fuse--buffer-string)))
+
+(ert-deftest fuse--test-parse-all-messages-2 ()
+  (fuse--reset-for-testing "Foo\n5\nabcdeBar\n4\nab" -1 -1)
+  (fuse--client-parse-all-messages)
+  (should (equal "Bar\n4\nab" fuse--buffer-string)))
