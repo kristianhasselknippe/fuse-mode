@@ -2,6 +2,10 @@
 (defvar fuse--buffer-pointer -1)
 (defvar fuse--symbol-pointer 0)
 
+(defun fuse--reset-message-parser ()
+  (setq fuse--buffer-pointer -1)
+  (setq fuse--symbol-pointer 0))
+
 (defun fuse--get-current-character ()
   "Returns the current character pointed to by buffer pointer"
   (if (or (< fuse--buffer-pointer 0)
@@ -21,11 +25,13 @@
 
 (defun fuse--get-current-symbol ()
   "Gets the current symbol and sets the symbol pointer equal to buffer pointer"
+  (when (< fuse--symbol-pointer 0)
+	(setq fuse--symbol-pointer 0))
   (if (or (>= fuse--symbol-pointer fuse--buffer-pointer)
-		  (< 0 fuse--symbol-pointer)
-		  (>= fuse--buffer-pointer (1- (length fuse--buffer-string))))
+		  (> fuse--buffer-pointer (length fuse--buffer-string)))
 	  nil
 	(let (ret)
+	  (princ (format "%d, %d" fuse--symbol-pointer fuse--buffer-pointer))
 	  (setq ret (substring fuse--buffer-string fuse--symbol-pointer fuse--buffer-pointer))
 	  (setq fuse--symbol-pointer fuse--buffer-pointer)
 	  ret)))
@@ -51,6 +57,8 @@
 
 (defun fuse--parse-bytes (nBytes)
   "Parses nBytes number of characters"
+  (when (< fuse--buffer-pointer 0)
+	(setq fuse--buffer-pointer 0))
   (setq fuse--buffer-pointer (+ fuse--buffer-pointer nBytes))
   (fuse--get-current-symbol))
 
