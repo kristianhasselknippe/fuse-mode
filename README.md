@@ -6,14 +6,14 @@ M-x fuse-mode to connect to the fuse daemon.
 An error-log buffer will display build errors.
 
 I am currently using csharp-mode for uno and nXML-mode for UX.
-These modes work quite nice until we get to do proper UNO and UX syntax highlighting, and we might be able
+These modes work quite nice until we get to do proper UNO and UX syntax highlighting. And we might be able
 to derive from these.
 
 
 ### Implemented
 
 - Daemon communication
-- Error log
+- Error log (not yet bootstrapped)
 
 ### Roadmap
 
