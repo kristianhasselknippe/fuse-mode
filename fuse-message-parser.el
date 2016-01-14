@@ -92,5 +92,5 @@
 (defun fuse--client-parse-all-messages ()
   (let ((message (fuse--parse-message)))
 	(while (not (equal message nil))
-	  ;(fuse--decode-message message)
+	  (fuse--decode-message message)
 	  (setq message (fuse--parse-message)))))
