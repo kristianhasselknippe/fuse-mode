@@ -1,5 +1,7 @@
 (require 'json)
 
+(load-file "~/fuse-mode/fuse-message-box.el")
+
 (defun create-message (type content)
   (concat type "\n" (number-to-string (length content)) "\n" content ))
 
@@ -11,9 +13,15 @@
 												   :Replay ,replay
 												   :SubscriptionId ,subscriptionId))))
 
+;Request types:
+;Fuse.GetCodeSuggestions
+;
+
+
+
 (defun create-request-build-started ()
   (create-message "Request"
-				  (create-command 'Subscribe 0 'Fuse.BuildStarted json-false 0)))
+				  (create-command 'Subscribe 'Fuse.BuildStarted json-false 0)))
 
 (defun create-request-build-issue-detected ()
   (create-message "Request"

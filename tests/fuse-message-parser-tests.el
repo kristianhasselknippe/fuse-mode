@@ -1,7 +1,4 @@
-(defun fuse--reset-for-testing (buffer-str sym-ptr buffer-ptr)
-  (setq fuse--buffer-string buffer-str)
-  (setq fuse--symbol-pointer sym-ptr)
-  (setq fuse--buffer-pointer buffer-ptr))
+(load-file "~/fuse-mode/tests/fuse-test-common.el")
 
 
 (ert-deftest fuse--test-get-next-character-1 ()
@@ -253,13 +250,3 @@
   (fuse--reset-for-testing "foobar" 0 0)
   (fuse--add-string-to-buffer "foobar")
   (should (equal fuse--buffer-string "foobarfoobar")))
-
-(ert-deftest fuse--test-parse-all-messages-1 ()
-  (fuse--reset-for-testing "Foo\n5\nabcdeBar\n4\nabcd" 0 0)
-  (fuse--client-parse-all-messages)
-  (should (equal "" fuse--buffer-string)))
-
-(ert-deftest fuse--test-parse-all-messages-2 ()
-  (fuse--reset-for-testing "Foo\n5\nabcdeBar\n4\nab" -1 -1)
-  (fuse--client-parse-all-messages)
-  (should (equal "Bar\n4\nab" fuse--buffer-string)))

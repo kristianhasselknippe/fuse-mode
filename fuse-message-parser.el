@@ -70,7 +70,7 @@
 (defun fuse--parse-message ()
   (let* ((type (fuse--parse-line))
 		 (nBytes-tmp (fuse--parse-line))
-		 (nBytes (if (not (equal nil nBytes-tmp))
+		 (nBytes (if (not (equal nil tmp-nBytes))
 					 (string-to-number nBytes-tmp)
 				   nil))
 		 (payload (if (not (equal nil nBytes))
@@ -86,11 +86,3 @@
 
 (defun fuse--add-string-to-buffer (string)
   (setq fuse--buffer-string (concat fuse--buffer-string string)))
-
-
-
-(defun fuse--client-parse-all-messages ()
-  (let ((message (fuse--parse-message)))
-	(while (not (equal message nil))
-	  (fuse--decode-message message)
-	  (setq message (fuse--parse-message)))))

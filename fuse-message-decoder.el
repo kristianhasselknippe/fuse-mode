@@ -19,3 +19,14 @@
 	(cond ((equal type "Response") (fuse--dispatch-response data))
 		  ((equal type "Event") (fuse--dispatch-event data))
 		  ((equal type "Request") (fuse--dispatch-request data)))))
+
+
+(defun fuse--parse-all-messages (callback)
+  (let ((message (fuse--parse-message)))
+	(while (not (equal message nil))
+	  (fuse--decode-message message)
+	  (setq message (fuse--parse-message)))))
+
+(defun fuse--receive-string (string)
+  (fuse--add-string-to-buffer string)
+  (fuse--parse-all-messages))
