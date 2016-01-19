@@ -1,5 +1,3 @@
-(load-file "~/fuse-mode/tests/fuse-test-common.el")
-
 
 (ert-deftest fuse--test-get-next-character-1 ()
   (fuse--reset-for-testing "foobar" 0 -1)
@@ -250,3 +248,5 @@
   (fuse--reset-for-testing "foobar" 0 0)
   (fuse--add-string-to-buffer "foobar")
   (should (equal fuse--buffer-string "foobarfoobar")))
+
+(provide 'fuse-message-parser-tests)

@@ -70,7 +70,7 @@
 (defun fuse--parse-message ()
   (let* ((type (fuse--parse-line))
 		 (nBytes-tmp (fuse--parse-line))
-		 (nBytes (if (not (equal nil tmp-nBytes))
+		 (nBytes (if (not (equal nil nBytes-tmp))
 					 (string-to-number nBytes-tmp)
 				   nil))
 		 (payload (if (not (equal nil nBytes))

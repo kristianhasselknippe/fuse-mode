@@ -9,3 +9,5 @@
   (should (equal (fuse--get-message-type-for-id 7) nil))
   (should (equal (fuse--get-message-type-for-id 0) 'ev))
   (should (equal (fuse--get-message-type-for-id -1) nil)))
+
+(provide 'fuse-message-box-tests)

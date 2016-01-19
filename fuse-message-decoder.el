@@ -19,7 +19,7 @@
 		  ((equal type "Request") (fuse--dispatch-request data)))))
 
 
-(defun fuse--parse-all-messages (callback)
+(defun fuse--parse-all-messages ()
   (let ((message (fuse--parse-message)))
 	(while (not (equal message nil))
 	  (fuse--decode-message message)
