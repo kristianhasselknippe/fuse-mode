@@ -1,4 +1,5 @@
 (require 'json)
+(require 'fuse-error-log)
 
 (load-file "~/fuse-mode/fuse-message-box.el")
 
@@ -33,18 +34,20 @@
 				  (create-command 'Subscribe 0 'Fuse.BuildIssueDetected json-false 0)))
 
 
+(defun fuse--build-issue-detected-handler (data)
+  (fuse-write-error-log data))
+
+(defun fuse--build-started-handler ()
+  (fuse--clear-error-log))
+
+(defun fuse--build-ended-handler ()
+  (fuse--println-to-fuse-buffer "Build did finish"))
+
+(defun fuse--decode-event (event-json-string)
+  (let ((data (json-read-from-string event-json-string)))
+	(let ((name (cdr (assoc 'Name data))))
+	  (cond ((equal name "Fuse.BuildStarted") (fuse--build-started-handler))
+			((equal name "Fuse.BuildEnded")   (fuse--build-ended-handler))
+			((equal name "Fuse.BuildIssueDetected") (fuse--build-issue-detected-handler (cdr (assoc 'Data data))))))))
+
 (provide 'fuse-messages)
-
-
-
-
-
-;{
-;    "Name": "Subscribe",
-;    "Id": 1,
-;    "Arguments": {
-;        "Filter": "Fuse.BuildStarted",
-;        "Replay": false,
-;        "SubscriptionId": 0
-;    }
-;}

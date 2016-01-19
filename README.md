@@ -22,6 +22,11 @@ to derive from these.
 - Starting previews
 - Selection
 
+### Dependencies:
+
+json.el
+s.el
+dash.el
 
 ## Licence
 

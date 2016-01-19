@@ -25,6 +25,14 @@
 	  (goto-char (point-max))
 	  (insert string))))
 
+(defun fuse--clear-fuse-buffer ()
+  (with-current-buffer (get-buffer-create "fuse-emacs")
+	(save-excursion
+	  (erase-buffer))))
+
+
+(defun fuse--println-to-fuse-buffer (string)
+  (fuse--print-to-fuse-buffer (concat string "\n")))
 
 
 (defun fuse--client-send-string (command-string)
