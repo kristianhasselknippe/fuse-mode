@@ -40,5 +40,7 @@
 		  (not (equal (fuse--ux-read-current-char) char))
 		  (not (equal (fuse--ux-read-current-char) nil)))
 	(fuse--ux-read-next-char))
-  (if (equal char fuse--ux-read-current-char)
+  (if (equal char fuse--ux-read-current-char)))
 	  ;; foo
+
+(provide 'fuse-ux-parser)

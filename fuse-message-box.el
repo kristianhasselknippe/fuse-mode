@@ -1,7 +1,5 @@
 (require 'dash)
 
-(load-file "~/fuse-mode/fuse-daemon-connection.el")
-
 (defvar fuse--message-id-index 0)
 (defvar fuse--messages-list '())
 
@@ -35,3 +33,5 @@
 
 (defun fuse--send-message (message)
   )
+
+(provide 'fuse-message-box)

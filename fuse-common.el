@@ -9,3 +9,5 @@
 
 (defun fuse--get-current-caret-character ()
   (current-column))
+
+(provide 'fuse-common)

@@ -86,3 +86,5 @@
 
 (defun fuse--add-string-to-buffer (string)
   (setq fuse--buffer-string (concat fuse--buffer-string string)))
+
+(provide 'fuse-message-parser)

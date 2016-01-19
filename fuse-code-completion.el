@@ -35,3 +35,5 @@
   '((candidates . (list "Foo" "Bar" "Baz"))))
 
 (append ac-sources '(ac-source-fuse-source))
+
+(provide 'fuse-code-completion)

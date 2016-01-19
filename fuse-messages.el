@@ -33,6 +33,8 @@
 				  (create-command 'Subscribe 0 'Fuse.BuildIssueDetected json-false 0)))
 
 
+(provide 'fuse-messages)
+
 
 
 

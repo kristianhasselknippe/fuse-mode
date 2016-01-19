@@ -1,6 +1,6 @@
-(load-file "~/fuse-mode/fuse-message-parser.el")
-(load-file "~/fuse-mode/fuse-message-decoder.el")
-(load-file "~/fuse-mode/fuse-messages.el")
+(require 'fuse-message-parser)
+(require 'fuse-message-decoder)
+(require 'fuse-messages)
 
 (defun fuse--client-filter (proc string)
   (fuse--receive-string string))
@@ -17,3 +17,5 @@
 
 (defun fuse--client-send-string (command-string)
   (process-send-string (fuse-get-client-process) command-string))
+
+(provide 'fuse-daemon-connection)

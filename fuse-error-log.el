@@ -29,3 +29,5 @@
 
 (defun fuse-clear-error-log ()
   )
+
+(provide 'fuse-error-log)

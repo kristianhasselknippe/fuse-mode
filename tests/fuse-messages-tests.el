@@ -26,3 +26,4 @@
   (should (equal
 		   (fuse--create-subscription-request "foo" "true")
 		   "{\"Name\":\"Subscribe\",\"Id\":1,\"Arguments\":{\"Filter\":\"foo\",\"Replay\":\"true\",\"SubscriptionId\":2}}")))
+2

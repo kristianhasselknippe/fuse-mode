@@ -1,7 +1,5 @@
 (require 'json)
-(load-file "~/fuse-mode/fuse-error-log.el")
-
-
+(require 'fuse-error-log)
 
 
 (defun fuse--dispatch-response (message)
@@ -30,3 +28,5 @@
 (defun fuse--receive-string (string)
   (fuse--add-string-to-buffer string)
   (fuse--parse-all-messages))
+
+(provide 'fuse-message-decoder)

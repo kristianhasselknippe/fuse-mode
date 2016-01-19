@@ -1,5 +1,5 @@
-(load-file "~/fuse-mode/fuse-common.el")
-(load-file "~/fuse-mode/fuse-daemon-connection.el")
+(require 'fuse-common)
+(require 'fuse-daemon-connection)
 
 (defun create-selection-changed-message ()
   (create-message "Event"
@@ -20,4 +20,4 @@
   (interactive)
   (princ (create-selection-changed-message)))
 
-(buffer-file-name)
+(provide 'fus-seleciton-changed)
