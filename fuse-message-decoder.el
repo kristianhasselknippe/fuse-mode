@@ -2,7 +2,8 @@
 
 
 (defun fuse--dispatch-response (message)
-  (fuse--print-to-fuse-buffer message))
+  (fuse--print-to-fuse-buffer ":::::Got Response:::::\n")
+  (fuse--print-to-fuse-buffer (concat message "\n")))
 
 (defun fuse--dispatch-event (message)
   (fuse--print-to-fuse-buffer message))

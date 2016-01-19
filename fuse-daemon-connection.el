@@ -4,7 +4,6 @@
 
 
 (defun fuse--client-filter (proc string)
-  (message string)
   (fuse--receive-string string))
 
 (defun fuse--create-client ()
@@ -23,6 +22,7 @@
 (defun fuse--print-to-fuse-buffer (string)
   (with-current-buffer (get-buffer-create "fuse-emacs")
 	(save-excursion
+	  (goto-char (point-max))
 	  (insert string))))
 
 

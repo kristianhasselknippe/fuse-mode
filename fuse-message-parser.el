@@ -82,7 +82,9 @@
 		(progn
 		  (fuse--consume-buffer-to-ptr)
 		  (list type nBytes payload))
-	  nil)))
+	  (progn
+		(fuse--reset-message-parser)
+		nil))))
 
 (defun fuse--add-string-to-buffer (string)
   (setq fuse--buffer-string (concat fuse--buffer-string string)))
