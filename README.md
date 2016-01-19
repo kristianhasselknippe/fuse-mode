@@ -3,7 +3,6 @@ Emacs plugin for Fuse
 
 M-x fuse-mode to connect to the fuse daemon.
 
-An error-log buffer will display build errors.
 
 I am currently using csharp-mode for uno and nXML-mode for UX.
 These modes work quite nice until we get to do proper UNO and UX syntax highlighting. And we might be able
