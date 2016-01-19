@@ -1,15 +1,14 @@
 (require 'json)
-(require 'fuse-error-log)
 
 
 (defun fuse--dispatch-response (message)
-  )
+  (fuse--print-to-fuse-buffer message))
 
 (defun fuse--dispatch-event (message)
-  )
+  (fuse--print-to-fuse-buffer message))
 
 (defun fuse--dispatch-request (message)
-  )
+  (fuse--print-to-fuse-buffer message))
 
 (defun fuse--decode-message (message)
   (let ((type (nth 0 message))

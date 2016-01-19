@@ -5,3 +5,4 @@
 (load-file "~/fuse-mode/tests/fuse-message-parser-tests.el")
 (load-file "~/fuse-mode/tests/fuse-messages-tests.el")
 (load-file "~/fuse-mode/tests/fuse-ux-parser-tests.el")
+(load-file "~/fuse-mode/tests/fuse-daemon-connection-tests.el")

@@ -12,4 +12,7 @@
   (fuse--parse-all-messages)
   (should (equal "Bar\n4\nab" fuse--buffer-string)))
 
+
+
+
 (provide 'fuse-message-decoder-tests)

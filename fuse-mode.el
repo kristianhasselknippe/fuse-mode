@@ -16,4 +16,28 @@
 
 (load-file "~/fuse-mode/tests/fuse-tests.el")
 
+
+
+
+
+(defun fuse--request-build-issue-detected ()
+  (fuse--client-send-string
+   (fuse--create-message 'Request (fuse--create-subscription-request "Fuse.BuildIssueDetected" t))))
+
+(defun fuse--request-build-started ()
+  (fuse--client-send-string
+   (fuse--create-message 'Request (fuse--create-subscription-request "Fuse.BuildStarted" t))))
+
+(defun fuse--request-build-ended ()
+  (fuse--client-send-string
+   (fuse--create-message 'Request (fuse--create-subscription-request "Fuse.BuildEnded" t))))
+
+(defun fuse--request-build-logged ()
+  )
+
+
+
+
+
+
 (provide 'fuse-mode)

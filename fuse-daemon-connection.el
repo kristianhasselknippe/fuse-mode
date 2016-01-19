@@ -2,20 +2,32 @@
 (require 'fuse-message-decoder)
 (require 'fuse-messages)
 
-(defun fuse--client-filter (proc string)
-  (fuse--receive-string string))
 
-(defun fuse--get-client-process ()
-  (get-process "fuse-emacs"))
+(defun fuse--client-filter (proc string)
+  (message string)
+  (fuse--receive-string string))
 
 (defun fuse--create-client ()
   (start-process "fuse-emacs" "fuse-emacs"
 				 "/usr/local/bin/fuse"
 				 "daemon-client"
 				 "fuse-mode")
-  (set-process-filter (fuse-get-client-process) 'fuse-client-filter))
+  (set-process-filter (get-process "fuse-emacs") 'fuse--client-filter))
+
+(defun fuse--get-client-process ()
+  (let ((proc (get-process "fuse-emacs")))
+	(when (equal proc nil)
+	  (fuse--create-client))
+	(get-process "fuse-emacs")))
+
+(defun fuse--print-to-fuse-buffer (string)
+  (with-current-buffer (get-buffer-create "fuse-emacs")
+	(save-excursion
+	  (insert string))))
+
+
 
 (defun fuse--client-send-string (command-string)
-  (process-send-string (fuse-get-client-process) command-string))
+  (process-send-string (fuse--get-client-process) command-string))
 
 (provide 'fuse-daemon-connection)
