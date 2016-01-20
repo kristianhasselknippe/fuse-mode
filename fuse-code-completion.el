@@ -15,7 +15,6 @@
   (interactive)
   (let (m)
 	(setq  m (fuse--create-get-completion-message))
-	(message m)
 	(fuse-client-send-command m)))
 
 ;{

@@ -20,8 +20,10 @@
 	(fuse--println-to-fuse-buffer
 	 (concat (-last-item (s-split "/" path))
 			 ": "
-			 (number-to-string line)))
-    (fuse--println-to-fuse-buffer (fuse--error-log-escape-newline message))))
+			 (if (numberp line)
+				 (number-to-string line)
+			   line)))
+    (fuse--println-to-fuse-buffer message)))
 
 (defun fuse--clear-error-log ()
   (fuse--clear-fuse-buffer))

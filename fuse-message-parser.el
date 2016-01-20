@@ -31,7 +31,6 @@
 		  (> fuse--buffer-pointer (length fuse--buffer-string)))
 	  nil
 	(let (ret)
-	  (princ (format "%d, %d" fuse--symbol-pointer fuse--buffer-pointer))
 	  (setq ret (substring fuse--buffer-string fuse--symbol-pointer fuse--buffer-pointer))
 	  (setq fuse--symbol-pointer fuse--buffer-pointer)
 	  ret)))
