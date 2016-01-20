@@ -12,7 +12,7 @@ to derive from these.
 ### Implemented
 
 - Daemon communication
-- Error log (not yet bootstrapped)
+- Error log
 
 ### Roadmap
 
