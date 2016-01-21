@@ -1,6 +1,6 @@
-(require 'fuse-message-parser)
-(require 'fuse-message-decoder)
-(require 'fuse-messages)
+;(require 'fuse-message-parser)
+;(require 'fuse-message-decoder)
+;(require 'fuse-messages)
 
 
 (defun fuse--client-filter (proc string)
