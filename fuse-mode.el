@@ -40,6 +40,10 @@
 
 
 
+(defun fuse-jack-in ()
+  (interactive)
+  (fuse--request-build-started)
+  (fuse--request-build-issue-detected))
 
 
 

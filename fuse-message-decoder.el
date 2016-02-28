@@ -1,6 +1,5 @@
 (require 'json)
 
-
 (defun fuse--dispatch-response (message)
   (fuse--print-to-fuse-buffer ":::::Got Response:::::\n\n")
   (fuse--print-to-fuse-buffer (concat message "\n")))

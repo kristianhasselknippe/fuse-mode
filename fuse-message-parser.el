@@ -3,6 +3,7 @@
 (defvar fuse--symbol-pointer 0)
 
 (defun fuse--reset-message-parser ()
+  (setq fuse--buffer-string "")
   (setq fuse--buffer-pointer -1)
   (setq fuse--symbol-pointer 0))
 

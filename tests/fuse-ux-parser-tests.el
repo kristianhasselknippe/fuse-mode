@@ -80,21 +80,48 @@
 
 (ert-deftest fuse--test-ux-read-current-symbol-5 ()
   (fuse--ux-reset-for-testing "<AppFooBar>" -1 5)
-  (should (equal (fuse--ux-read-current-symbol) "<AppF")))
+  (should (equal (fuse--ux-read-current-symbol) "<AppF"))
+  (should (equal fuse--ux-bfr-ptr fuse--ux-sym-ptr)))
+
+
+
+
+(ert-deftest fuse--test-ux-parse-name-until-1 ()
+  (fuse--ux-reset-for-testing "App/>" -1 -1)
+  (should (equal (fuse--ux-parse-name-until ?/) "App")))
+
+(ert-deftest fuse--test-ux-parse-name-until-2 ()
+  (fuse--ux-reset-for-testing "<App/>" 1 1)
+  (should (equal (fuse--ux-parse-name-until ?/) "App")))
+
+(ert-deftest fuse--test-ux-parse-name-until-3 ()
+  (fuse--ux-reset-for-testing "<App/>" -1 1)
+  (should (equal (fuse--ux-parse-name-until ?/) "<App")))
+
+(ert-deftest fuse--test-ux-parse-name-until-4 ()
+  (fuse--ux-reset-for-testing "<App/>" 1 1)
+  (should (equal (fuse--ux-parse-name-until ?>) nil)))
 
 
 
 
 
 
-(ert-deftest fuse--test-ux-name-chars ()
-  )
 
 
 
-
-
-
-(ert-deftest fuse--test-ux-parse-tag ()
+(ert-deftest fuse--test-ux-parse-tag-1 ()
   (fuse--ux-reset-for-testing "<App>" -1 -1)
   (should (equal (fuse--ux-parse-tag) "App")))
+
+(ert-deftest fuse--test-ux-parse-tag-2 ()
+  (fuse--ux-reset-for-testing "<App  >" -1 -1)
+  (should (equal (fuse--ux-parse-tag) "App")))
+
+(ert-deftest fuse--test-ux-parse-tag-3 ()
+  (fuse--ux-reset-for-testing "<App />" -1 -1)
+  (should (equal (fuse--ux-parse-tag) "App")))
+
+(ert-deftest fuse--test-ux-parse-tag-4 ()
+  (fuse--ux-reset-for-testing "< App>" -1 -1)
+  (should (equal (fuse--ux-parse-tag) nil)))

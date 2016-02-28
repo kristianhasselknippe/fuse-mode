@@ -12,6 +12,8 @@
 	nil))
 
 (defun fuse--ux-read-current-char ()
+  (when (< fuse--ux-bfr-ptr 0)
+	  (setq fuse--ux-bfr-ptr 0))
   (fuse--ux-nth fuse--ux-bfr-ptr))
 
 (defun fuse--ux-read-next-char ()
@@ -33,17 +35,9 @@
 		  (> fuse--ux-bfr-ptr (length fuse--ux-bfr)))
 	  nil
 	(let (ret)
-	  (setq ret (substring fuse--ux-bfr fuse--ux-sym-ptr fuse--ux-bfr-ptr))
+	  (setq ret (substring fuse--ux-bfr fuse--ux-sym-ptr (1+ fuse--ux-bfr-ptr)))
 	  (setq fuse--ux-sym-ptr fuse--ux-bfr-ptr)
 	  ret)))
-
-(defun fuse--ux-consume-current-symbol ()
-  (let ((ret (fuse--ux-read-current-symbol)))
-	(if (equal ret nil)
-		ret
-	  (progn
-		(setq fuse--ux-sym-ptr fuse--ux-bfr-ptr)
-		ret)))
 
 (defun fuse--ux-parse-char (char)
   (if (equal char (fuse--ux-peek-next-char))
@@ -56,26 +50,30 @@
 	  (setq fuse--ux-valid-name-chars (let (tmp)
 			  (setq tmp (split-string "abcdefghijklmnopqrstuvwxyzABCEDFGHIJKLMNOPQRSTUVWXYZ0123456789_01234256789" ""))
 			  (-slice tmp 1 (1- (length tmp)))))
-	fuse--ux-valid-names))
+	fuse--ux-valid-name-chars))
 
 
 (defun fuse--ux-parse-name-until (char)
   (while (and
-		  (-contains? (fuse--ux-valid-names) (fuse--ux-read-current-char))
+		  (-contains? (fuse--ux-valid-name-chars) (char-to-string (fuse--ux-read-current-char)))
 		  (not (equal (fuse--ux-read-current-char) char))
 		  (not (equal (fuse--ux-read-current-char) nil)))
 	(fuse--ux-read-next-char))
-  (if (equal char fuse--ux-read-current-char)
-	  (fuse--ux-consume-current-symbol)
+  (if (equal char (fuse--ux-read-current-char))
+	  (fuse--ux-read-current-symbol)
 	nil))
 
 
 (defun fuse--ux-parse-tag ()
-  (fuse--ux-parse-char ?<)
-  (let ((tag-name (fuse--ux-parse-name-until ?>)))
-	(princ tag-name)
-	(when (not (equal tag-name nil))
-	  (princ (s-concat "We got a tag name: " tag-name)))))
+  (if (fuse--ux-parse-char ?<)
+	  (progn
+		(fuse--ux-read-current-symbol)
+		(let ((tag-name (fuse--ux-parse-name-until ?>)))
+		  (princ tag-name)
+		  (when (not (equal tag-name nil))
+			(princ (s-concat "We got a tag name: " tag-name)))))
+	nil))
+
 
 
 (provide 'fuse-ux-parser)

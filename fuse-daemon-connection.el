@@ -7,6 +7,7 @@
   (fuse--receive-string string))
 
 (defun fuse--create-client ()
+  (fuse--reset-message-parser)
   (start-process "fuse-emacs" "fuse-emacs"
 				 "/usr/local/bin/fuse"
 				 "daemon-client"
