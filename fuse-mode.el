@@ -1,50 +1,42 @@
-(load-file "~/fuse-mode/fuse-message-parser.el")
+(require 'cl)
+(require 'json)
 
-(load-file "~/fuse-mode/fuse-daemon-connection.el")
+;Event
+;{
+;    "Name": "ExampleEvent",
+;    "SubscriptionId": 32, // The id of the event subscription (set automatically by the daemon),
+;    "Data": { ... }, // An event-specific JSON-object with the event data
+;}
 
-(load-file "~/fuse-mode/fuse-error-log.el")
-(load-file "~/fuse-mode/fuse-message-decoder.el")
+;Request
+;{
+;    "Name": "MyRequest",
+;    "Id": 242, // Make this a unique number for each request, so you can recognize the matching response message
+;    "Arguments": { ... }, // A request-specific JSON-object with the request
+;}
 
-(load-file "~/fuse-mode/fuse-message-box.el")
-(load-file "~/fuse-mode/fuse-messages.el")
-(load-file "~/fuse-mode/fuse-code-completion.el")
-(load-file "~/fuse-mode/fuse-common.el")
-
-
-(load-file "~/fuse-mode/fuse-preview.el")
-(load-file "~/fuse-mode/fuse-selection-changed.el")
-
-;(load-file "~/fuse-mode/fuse-ux-parser.el")
-
-
-(load-file "~/fuse-mode/tests/fuse-tests.el")
+;Response
+;{
+;    "Id": 242, // The id of the request to which this is a response
+;    "Status": "Success", // Can be "Success", "Error" or "Unhandled"
+;    "Result": { ... }, // If status is "Succsess", a request-specific JSON-object with the response
+;    "Errors": [ ... ], // If status is "Error", an array of objects containing more error information
+;}
 
 
-
-
-
-(defun fuse--request-build-issue-detected ()
-  (fuse--client-send-string
-   (fuse--create-message 'Request (fuse--create-subscription-request "Fuse.BuildIssueDetected" t))))
-
-(defun fuse--request-build-started ()
-  (fuse--client-send-string
-   (fuse--create-message 'Request (fuse--create-subscription-request "Fuse.BuildStarted" t))))
-
-(defun fuse--request-build-ended ()
-  (fuse--client-send-string
-   (fuse--create-message 'Request (fuse--create-subscription-request "Fuse.BuildEnded" t))))
-
-(defun fuse--request-build-logged ()
-  )
+(cl-defstruct event name subscription-id data)
+(cl-defstruct request name id arguments)
+(cl-defstruct response id status result errors)
 
 
 
-(defun fuse-jack-in ()
-  (interactive)
-  (fuse--request-build-started)
-  (fuse--request-build-issue-detected))
+(make-variable-buffer-local
+ (defvar fuse--buffer ""))
 
-
+;;###autoload
+(define-minor-mode fuse-mode
+  "The Fuse minor mode."
+  :lighter "fuse"
+  :keymap (make-sparse-keymap))
 
 (provide 'fuse-mode)
