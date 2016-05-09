@@ -26,13 +26,24 @@
 		  :Character ,(caret-position-character caret-position)))
 
 (cl-defstruct code-completion-request-args syntax-type path text caret-position)
-(defun code-completion-request-args-to-obj
+(defun code-completion-request-args-to-obj (cbra)
+  `(:SyntaxType ,(code-completion-request-args-syntax-type cbra)
+				:Path ,(code-completion-request-args-path cbra)
+				:Text ,(code-completion-request-args-text cbra)
+				:CaretPosition ,(code-completion-request-args-caret-position cbra)))
+
+
+(defun request-args-to-obj (req-args)
+  (cond ((subscribe-request-args-p req-args)(subscribe-request-args-to-obj))
+		((code-completion-request-args-p req-args)(code-completion-request-args-to-obj req-args))
+		(t (error "the request arg is not recognized"))))
+
 
 (cl-defstruct request name id arguments)
 (defun request-to-obj (request)
   `(:Name ,(request-name request)
 		  :Id ,(request-id request)
-		  :Arguments ,(subscribe-request-args-to-obj (request-arguments request))))
+		  :Arguments ,(request-args-to-obj (request-arguments request))))
 
 (cl-defstruct response id status result errors)
 
@@ -88,7 +99,12 @@
 											:caret-position (make-care-position
 															 :line (count-lines 1 (point))
 															 :column (current-column))))))
-	()))
+	(let* ((req-obj (request-to-obj request))
+		   (req-obj-json (json-encode req-obj))
+		   (message (make-message :type "Request"
+								  :length (length payload)
+								  :payload payload)))
+	  (process-send-string fuse--daemon-proc (message-to-string message)))))
 
 (defvar ac-source-fuse-mode
   '((candidates . (list "Foo" "Bar" "Baz"))))
@@ -126,9 +142,13 @@
 														 (fuse--log-issue-detected data))))))))
 
 (defun fuse--mode-init ()
-  (setf fuse--daemon-proc (start-process "fuse-mode"
-										 "fuse-mode"
-										 "/usr/local/bin/fuse" "daemon-client" "fuse-mode"))
+  (if (equal system-type 'windows-nt)
+	  (setf fuse--daemon-proc (start-process "fuse-mode"
+											 "fuse-mode"
+											 "C:\Program Files (x86)\Fuse\Fuse.exe" "daemon-client" "fuse-mode"))
+	(setf fuse--daemon-proc (start-process "fuse-mode"
+										   "fuse-mode"
+										   "/usr/local/bin/fuse" "daemon-client" "fuse-mode")))
 
   (set-process-filter fuse--daemon-proc 'fuse--filter)
   (set-process-sentinel fuse--daemon-proc (lambda (proc msg) ))
@@ -145,3 +165,5 @@
 (add-hook 'fuse-mode-hook 'fuse--mode-init)
 
 (provide 'fuse-mode)
+
+ ;;; fuse-mode.el ends here
