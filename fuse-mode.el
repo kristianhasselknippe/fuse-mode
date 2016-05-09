@@ -30,11 +30,11 @@
   `(:SyntaxType ,(code-completion-request-args-syntax-type cbra)
 				:Path ,(code-completion-request-args-path cbra)
 				:Text ,(code-completion-request-args-text cbra)
-				:CaretPosition ,(code-completion-request-args-caret-position cbra)))
+				:CaretPosition ,(caret-position-to-obj (code-completion-request-args-caret-position cbra))))
 
 
 (defun request-args-to-obj (req-args)
-  (cond ((subscribe-request-args-p req-args)(subscribe-request-args-to-obj))
+  (cond ((subscribe-request-args-p req-args)(subscribe-request-args-to-obj req-args))
 		((code-completion-request-args-p req-args)(code-completion-request-args-to-obj req-args))
 		(t (error "the request arg is not recognized"))))
 
@@ -75,7 +75,7 @@
   (fuse--log (concat
 			  "ErrorCode: " (issue-detected-data-error-code data)
 			  "\nPath: " (issue-detected-data-path data)
-			  "\nLine: " (number-to-cdra (stringso  'Line (issue-detected-data-start-pos data))))))
+			  "\nLine: " (number-to-string (cdra 'Line (issue-detected-data-start-pos data))))))
 
 ;{
 ;    "Id": 42, // Unique request id
@@ -91,20 +91,23 @@
 
 
 (defun fuse--request-code-completion ()
-  (let* ((request (make-request :name "Fuse.GetCodeSuggestions" :id 1
+  (interactive)
+  (let* ((request (make-request :name "Fuse.GetCodeSuggestions"
+								:id 2
 								:arguments (make-code-completion-request-args
-											:syntax-type (s-upcase (last (s-split "\\." (buffer-file-name))))
-											:path (buffer-file-name)
+											:syntax-type (s-upcase (car (last (s-split "\\." (buffer-file-name)))))
+											:path (s-replace "/" "\\" (buffer-file-name))
 											:text (buffer-substring-no-properties (point-min) (point-max))
-											:caret-position (make-care-position
+											:caret-position (make-caret-position
 															 :line (count-lines 1 (point))
-															 :column (current-column))))))
+															 :character (current-column))))))
 	(let* ((req-obj (request-to-obj request))
 		   (req-obj-json (json-encode req-obj))
-		   (message (make-message :type "Request"
-								  :length (length payload)
-								  :payload payload)))
-	  (process-send-string fuse--daemon-proc (message-to-string message)))))
+		   (msg (make-message :type "Request"
+								  :length (length req-obj-json)
+								  :payload req-obj-json)))
+	  (princ (message-to-string msg))
+	  (process-send-string fuse--daemon-proc (message-to-string msg)))))
 
 (defvar ac-source-fuse-mode
   '((candidates . (list "Foo" "Bar" "Baz"))))
@@ -115,6 +118,7 @@
 
 
 (defun fuse--filter (proc msg)
+  (message msg)
   (setf fuse--buffer (concat fuse--buffer msg))
   (let ((message-split (s-split-up-to "\n" fuse--buffer 3)))
 	(when (>= (length message-split) 3)
@@ -125,8 +129,12 @@
 		(if (= (length message-split) 4)
 			(setf fuse--buffer (nth 3 message-split))
 		  (setf fuse--buffer ""))
-		(cond ((string= (message-type message) "Response") (let ((decoded-payload (json-read (message-payload message))))
-															 ))
+		(cond ((string= (message-type message) "Response") (let* ((decoded-payload (json-read-from-string (message-payload message)))
+																  (response (make-response
+																			 :id (cdra 'Id decoded-payload)
+																			 :status (cdra 'Status decoded-payload)
+																			 :errors (cdra 'Errors decoded-payload))))
+															 (edebug)))
 			  ((string= (message-type message) "Event")(let* ((decoded-payload (json-read-from-string (message-payload message)))
 															  (event (make-event :name (cdra 'Name decoded-payload)
 																				 :subscription-id (cdra 'SubscriptionId decoded-payload)
@@ -145,7 +153,7 @@
   (if (equal system-type 'windows-nt)
 	  (setf fuse--daemon-proc (start-process "fuse-mode"
 											 "fuse-mode"
-											 "C:\Program Files (x86)\Fuse\Fuse.exe" "daemon-client" "fuse-mode"))
+											 "C:/Program Files (x86)/Fuse/Fuse.exe" "daemon-client" "fuse-mode"))
 	(setf fuse--daemon-proc (start-process "fuse-mode"
 										   "fuse-mode"
 										   "/usr/local/bin/fuse" "daemon-client" "fuse-mode")))
