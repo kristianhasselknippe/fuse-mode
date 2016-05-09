@@ -20,6 +20,14 @@
 			:Replay ,(subscribe-request-args-replay sub-req-args)
 			:SubscriptionId ,(subscribe-request-args-id sub-req-args)))
 
+(cl-defstruct caret-position line character)
+(defun caret-position-to-obj (caret-position)
+  `(:Line ,(caret-position-line caret-position)
+		  :Character ,(caret-position-character caret-position)))
+
+(cl-defstruct code-completion-request-args syntax-type path text caret-position)
+(defun code-completion-request-args-to-obj
+
 (cl-defstruct request name id arguments)
 (defun request-to-obj (request)
   `(:Name ,(request-name request)
@@ -41,15 +49,10 @@
 	(insert msg)))
 
 
-(defun request-services ()
-	(let* ((request (make-request
-					 :name "Subscribe"
-					 :id 0
-					 :arguments
-					 (make-subscribe-request-args
-					  :filter "Fuse.BuildIssueDetected"
-					  :replay t
-					  :id 1)))
+(defun fuse--request-services ()
+  (let* ((request (make-request :name "Subscribe" :id 0
+								:arguments (make-subscribe-request-args
+											:filter "Fuse.BuildIssueDetected" :replay t :id 1)))
 		   (payload (json-encode (request-to-obj request)))
 		   (message (make-message :type "Request"
 								  :length (length payload)
@@ -61,7 +64,38 @@
   (fuse--log (concat
 			  "ErrorCode: " (issue-detected-data-error-code data)
 			  "\nPath: " (issue-detected-data-path data)
-			  "\nLine: " (number-to-string (cdra 'Line (issue-detected-data-start-pos data))))))
+			  "\nLine: " (number-to-cdra (stringso  'Line (issue-detected-data-start-pos data))))))
+
+;{
+;    "Id": 42, // Unique request id
+;    "Name": "Fuse.GetCodeSuggestions",
+;    "Arguments":
+;    {
+;        "SyntaxType": "UX", // Typically "UX" or "Uno"
+;        "Path": "C:\\FuseProjects\\MainView.ux", // Path to document where suggestion is requested
+;        "Text": "<App>\n\t<Button />\n</App>", // Full source of document where suggestion is requested
+;        "CaretPosition": { "Line": 2, "Character": 9 } // 1-indexed text position within Text where suggestion is requested
+;    }
+;}
+
+
+(defun fuse--request-code-completion ()
+  (let* ((request (make-request :name "Fuse.GetCodeSuggestions" :id 1
+								:arguments (make-code-completion-request-args
+											:syntax-type (s-upcase (last (s-split "\\." (buffer-file-name))))
+											:path (buffer-file-name)
+											:text (buffer-substring-no-properties (point-min) (point-max))
+											:caret-position (make-care-position
+															 :line (count-lines 1 (point))
+															 :column (current-column))))))
+	()))
+
+(defvar ac-source-fuse-mode
+  '((candidates . (list "Foo" "Bar" "Baz"))))
+
+(defun ac-complete-fuse-mode ()
+  (interactive)
+  (auto-complete '(ac-source-fuse-mode)))
 
 
 (defun fuse--filter (proc msg)
@@ -97,7 +131,8 @@
 										 "/usr/local/bin/fuse" "daemon-client" "fuse-mode"))
 
   (set-process-filter fuse--daemon-proc 'fuse--filter)
-  (set-process-sentinel fuse--daemon-proc (lambda (proc msg) )))
+  (set-process-sentinel fuse--daemon-proc (lambda (proc msg) ))
+  (fuse--request-services))
 
 
 ;;;###autoload
