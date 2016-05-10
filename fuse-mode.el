@@ -4,6 +4,14 @@
 (require 'json)
 (require 'edebug)
 
+(defvar fuse--structs '())
+
+(defun fuse--structs-to-serializable (struct)
+  (-each fuse-structs
+	(lambda (pred)
+	  (when ((funcall pred struct))
+		())
+
 (defmacro defstruct-and-to-obj (name &rest args)
   (append `(progn) `((cl-defstruct ,name ,@args)
 		  ,(append `(defun ,(intern (format "%s-to-obj" name)) (arg))
@@ -12,7 +20,10 @@
 									 (setq body (append body
 											 `(,(intern (format ":%s" a)))
 											 `((,(intern (format "%s-%s" name a)) arg))))))
-					 `(list ,@body)))))))
+						  `(list ,@body)))))
+		  `((setq fuse--structs (append fuse--structs ,(intern (format "%s-p" name)))))))
+
+
 
 
 (defun cdra (key alist)
