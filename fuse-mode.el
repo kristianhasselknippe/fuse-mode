@@ -4,6 +4,9 @@
 (require 'json)
 (require 'edebug)
 
+(defun cdra (key alist)
+  (cdr (assoc key alist)))
+
 (defvar fuse--structs '())
 
 (defun fuse--serializable (struct)
@@ -33,11 +36,6 @@
 		  `((setq fuse--structs (append fuse--structs (list (quote ,(intern (format "%s-p" name)))))))))
 
 
-
-
-(defun cdra (key alist)
-  (cdr (assoc key alist)))
-
 (setq fuse--buffer "")
 (setq fuse--daemon-proc nil)
 
@@ -50,6 +48,10 @@
 (defstruct-and-to-obj response id status result errors)
 (defstruct-and-to-obj message type length payload)
 (defstruct-and-to-obj subscription-response id status error results)
+
+(defstruct-and-to-obj method-argument name arg-type is-out)
+(defstruct-and-to-obj code-suggestions suggestion pre-text post-text type return-type access-modifiers field-modifiers method-arguments)
+(defstruct-and-to-obj code-completion-response is-updating-cache code-suggestions)
 
 
 
@@ -80,18 +82,6 @@
 			  "\nPath: " (issue-detected-data-path data)
 			  "\nLine: " (number-to-string (cdra 'Line (issue-detected-data-start-pos data))))))
 
-;{
-;    "Id": 42, // Unique request id
-;    "Name": "Fuse.GetCodeSuggestions",
-;    "Arguments":
-;    {
-;        "SyntaxType": "UX", // Typically "UX" or "Uno"
-;        "Path": "C:\\FuseProjects\\MainView.ux", // Path to document where suggestion is requested
-;        "Text": "<App>\n\t<Button />\n</App>", // Full source of document where suggestion is requested
-;        "CaretPosition": { "Line": 2, "Character": 9 } // 1-indexed text position within Text where suggestion is requested
-;    }
-;}
-
 
 (defun fuse--request-code-completion ()
   (interactive)
@@ -104,7 +94,7 @@
 											:caret-position (make-caret-position
 															 :line (count-lines 1 (point))
 															 :character (current-column))))))
-	(let* ((req-obj (request-to-obj request))
+	(let* ((req-obj (fuse--serializable request))
 		   (req-obj-json (json-encode req-obj))
 		   (msg (make-message :type "Request"
 								  :length (length req-obj-json)
@@ -119,7 +109,6 @@
   (interactive)
   (auto-complete '(ac-source-fuse-mode)))
 
-
 (defun fuse--filter (proc msg)
   (message msg)
   (setf fuse--buffer (concat fuse--buffer msg))
@@ -132,12 +121,15 @@
 		(if (= (length message-split) 4)
 			(setf fuse--buffer (nth 3 message-split))
 		  (setf fuse--buffer ""))
-		(cond ((string= (message-type message) "Response") (let* ((decoded-payload (json-read-from-string (message-payload message)))
+		(cond ((string= (message-type message) "Response") (let ((decoded-payload (json-read-from-string (message-payload message))))
+															 (princ (fuse--serializable message))
+
+															 ;(cond ((string=
 																  (response (make-response
 																			 :id (cdra 'Id decoded-payload)
 																			 :status (cdra 'Status decoded-payload)
-																			 :errors (cdra 'Errors decoded-payload))))
-															 (edebug)))
+																			 :errors (cdra 'Errors decoded-payload)))
+															 ))
 			  ((string= (message-type message) "Event")(let* ((decoded-payload (json-read-from-string (message-payload message)))
 															  (event (make-event :name (cdra 'Name decoded-payload)
 																				 :subscription-id (cdra 'SubscriptionId decoded-payload)
@@ -152,6 +144,33 @@
 																							  :message (cdra 'Message decoded-data))))
 														 (fuse--log-issue-detected data))))))))
 
+;{
+;    "Id": 42, // Id of request
+;    "Status": "Success",
+;    "Result":
+;    {
+;        "IsUpdatingCache": false, // If true you should consider trying again later
+;        "CodeSuggestions":
+;        [
+;            {
+;                "Suggestion": "<suggestion>",
+;                "PreText": "<pretext>",
+;                "PostText": "<posttext>",
+;                "Type": "<datatype>",
+;                "ReturnType": "<datatype>",
+;                "AccessModifiers": [ "<accessmodifier>", ... ],
+;                "FieldModifiers": [ "<fieldmodifier>", ... ],
+;                "MethodArguments":
+;                [
+;                    { "Name": "<name>", "ArgType": "<datatype>", "IsOut": "<false|true>" },
+;                    ...
+;                ],
+;            },
+;            ...
+;            ],
+;    }
+;}
+
 (defun fuse--mode-init ()
   (if (equal system-type 'windows-nt)
 	  (setf fuse--daemon-proc (start-process "fuse-mode"
@@ -164,6 +183,8 @@
   (set-process-filter fuse--daemon-proc 'fuse--filter)
   (set-process-sentinel fuse--daemon-proc (lambda (proc msg) ))
   (fuse--request-services))
+
+
 
 
 ;;;###autoload
