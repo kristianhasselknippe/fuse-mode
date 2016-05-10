@@ -6,11 +6,18 @@
 
 (defvar fuse--structs '())
 
-(defun fuse--structs-to-serializable (struct)
-  (-each fuse-structs
-	(lambda (pred)
-	  (when ((funcall pred struct))
-		())
+(defun fuse--serializable (struct)
+  (let ((didFindMatch 'nil)
+		(ret))
+	(-each fuse-structs
+	  (lambda (pred)
+		(when ((funcall pred struct))
+		  (progn
+			(setq ret (funcall (intern (format "%s-to-obj" struct)) struct))
+			(setq didFindMatch t)))))
+	(if (didFindMatch)
+		ret
+	  struct)))
 
 (defmacro defstruct-and-to-obj (name &rest args)
   (append `(progn) `((cl-defstruct ,name ,@args)
@@ -19,9 +26,9 @@
 						  (-each args (lambda (a)
 									 (setq body (append body
 											 `(,(intern (format ":%s" a)))
-											 `((,(intern (format "%s-%s" name a)) arg))))))
+											 `((fuse--serializable (,(intern (format "%s-%s" name a)) arg)))))))
 						  `(list ,@body)))))
-		  `((setq fuse--structs (append fuse--structs ,(intern (format "%s-p" name)))))))
+		  `((setq fuse--structs (append fuse--structs (list (quote ,(intern (format "%s-p" name)))))))))
 
 
 
