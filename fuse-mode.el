@@ -8,14 +8,16 @@
 
 (defun fuse--serializable (struct)
   (let ((didFindMatch 'nil)
-		(ret))
-	(-each fuse-structs
+		(ret 'nil))
+	(-each fuse--structs
 	  (lambda (pred)
-		(when ((funcall pred struct))
+		(when (funcall pred struct)
 		  (progn
-			(setq ret (funcall (intern (format "%s-to-obj" struct)) struct))
+			(setq ret (funcall (intern (format "%s-to-obj"
+											   (s-join "-" (-remove-last (lambda (x) t) (s-split "-" (symbol-name pred))))
+											   )) struct))
 			(setq didFindMatch t)))))
-	(if (didFindMatch)
+	(if didFindMatch
 		ret
 	  struct)))
 
@@ -39,50 +41,22 @@
 (setq fuse--buffer "")
 (setq fuse--daemon-proc nil)
 
-(cl-defstruct event name subscription-id data)
-
-(cl-defstruct issue-detected-data build-id issue-type path start-pos end-pos error-code message)
-
-(cl-defstruct subscribe-request-args filter replay id)
-(defun subscribe-request-args-to-obj (sub-req-args)
-  `(:Filter ,(subscribe-request-args-filter sub-req-args)
-			:Replay ,(subscribe-request-args-replay sub-req-args)
-			:SubscriptionId ,(subscribe-request-args-id sub-req-args)))
-
-(cl-defstruct caret-position line character)
-(defun caret-position-to-obj (caret-position)
-  `(:Line ,(caret-position-line caret-position)
-		  :Character ,(caret-position-character caret-position)))
-
-(cl-defstruct code-completion-request-args syntax-type path text caret-position)
-(defun code-completion-request-args-to-obj (cbra)
-  `(:SyntaxType ,(code-completion-request-args-syntax-type cbra)
-				:Path ,(code-completion-request-args-path cbra)
-				:Text ,(code-completion-request-args-text cbra)
-				:CaretPosition ,(caret-position-to-obj (code-completion-request-args-caret-position cbra))))
+(defstruct-and-to-obj event name subscription-id data)
+(defstruct-and-to-obj issue-detected-data build-id issue-type path start-pos end-pos error-code message)
+(defstruct-and-to-obj subscribe-request-args filter replay id)
+(defstruct-and-to-obj caret-position line character)
+(defstruct-and-to-obj code-completion-request-args syntax-type path text caret-position)
+(defstruct-and-to-obj request name id arguments)
+(defstruct-and-to-obj response id status result errors)
+(defstruct-and-to-obj message type length payload)
+(defstruct-and-to-obj subscription-response id status error results)
 
 
-(defun request-args-to-obj (req-args)
-  (cond ((subscribe-request-args-p req-args)(subscribe-request-args-to-obj req-args))
-		((code-completion-request-args-p req-args)(code-completion-request-args-to-obj req-args))
-		(t (error "the request arg is not recognized"))))
 
-
-(cl-defstruct request name id arguments)
-(defun request-to-obj (request)
-  `(:Name ,(request-name request)
-		  :Id ,(request-id request)
-		  :Arguments ,(request-args-to-obj (request-arguments request))))
-
-(cl-defstruct response id status result errors)
-
-(cl-defstruct message type length payload)
 (defun message-to-string (message)
   (unless (message-p message) (error "message-to-string only handles message types"))
   (format "%s\n%d\n%s\n" (message-type message) (message-length message) (message-payload message)))
 
-
-(cl-defstruct subscription-response id status error results)
 
 (defun fuse--log (msg)
   (with-current-buffer (get-buffer-create "fuse-log")
