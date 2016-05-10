@@ -4,16 +4,15 @@
 (require 'json)
 (require 'edebug)
 
-;; almost working macro
 (defmacro defstruct-and-to-obj (name &rest args)
-  (append `(progn) `((cl-defstruct (,name) args)
+  (append `(progn) `((cl-defstruct ,name ,@args)
 		  ,(append `(defun ,(intern (format "%s-to-obj" name)) (arg))
 					 `(,(let ((body `()))
 						  (-each args (lambda (a)
 									 (setq body (append body
 											 `(,(intern (format ":%s" a)))
-											 `((,(intern (format "%s-%s" name a)) ,name))))))
-					   body))))))
+											 `((,(intern (format "%s-%s" name a)) arg))))))
+					 `(list ,@body)))))))
 
 
 (defun cdra (key alist)
