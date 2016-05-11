@@ -113,8 +113,12 @@
 	  (message (message-to-string msg))
 	  (process-send-string fuse--daemon-proc (message-to-string msg)))))
 
+
+(defvar fuse--ac-cache '())
+
 (defvar ac-source-fuse-mode
-  '((candidates . (list "Foo" "Bar" "Baz"))))
+  (fuse--debug-log "foo")
+  '((candidates . fuse--ac-cache)))
 
 (defun ac-complete-fuse-mode ()
   (interactive)
@@ -148,8 +152,10 @@
 								   (make-code-completion-response
 									:IsUpdatingCache (cdra 'IsUpdatingCache (response-Result response))
 									:CodeSuggestions (cdra 'CodeSuggestions (response-Result response)))))
+							  (setq fuse--ac-cache '())
 							  (-each (append (code-completion-response-CodeSuggestions code-com-resp) nil)
 								(lambda (sugg)
+								  (fuse--debug-log "f")
 								  (let ((code-suggestion
 										 (make-code-suggestions
 										  :Suggestion (cdra 'Suggestion sugg)
@@ -160,12 +166,11 @@
 										  :AccessModifiers (cdra 'AccessModifiers sugg)
 										  :FieldModifiers (cdra 'FieldModifiers sugg)
 										  :MethodArguments (cdra 'MethodArguments sugg))))
-									(fuse--debug-log (concat (code-suggestions-Suggestion code-suggestion) "\n"))))))))
-
-
-					 ))
+									(setq fuse--ac-cache (append fuse--ac-cache (list (code-suggestions-Suggestion code-suggestion)))))))
+							  (fuse--debug-log "Calling ac complete")
+							  (ac-complete-fuse-mode))))))
 				  ((string= (message-Type message) "Event")
-				   (let* ((decoded-payload (json-read-from-string (message-payload message)))
+				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
 						  (event (make-event :Name (cdra 'Name decoded-payload)
 											 :SubscriptionId (cdra 'SubscriptionId decoded-payload)
 											 :Data (cdra 'Data decoded-payload)))
@@ -179,32 +184,8 @@
 														  :Message (cdra 'Message decoded-data))))
 					 (fuse--log-issue-detected data))))))))))
 
-										;{
-										;    "Id": 42, // Id of request
-										;    "Status": "Success",
-										;    "Result":
-										;    {
-										;        "IsUpdatingCache": false, // If true you should consider trying again later
-										;        "CodeSuggestions":
-										;        [
-										;            {
-										;                "Suggestion": "<suggestion>",
-										;                "PreText": "<pretext>",
-										;                "PostText": "<posttext>",
-										;                "Type": "<datatype>",
-										;                "ReturnType": "<datatype>",
-										;                "AccessModifiers": [ "<accessmodifier>", ... ],
-										;                "FieldModifiers": [ "<fieldmodifier>", ... ],
-										;                "MethodArguments":
-										;                [
-										;                    { "Name": "<name>", "ArgType": "<datatype>", "IsOut": "<false|true>" },
-										;                    ...
-										;                ],
-										;            },
-										;            ...
-										;            ],
-										;    }
-										;}
+
+
 
   (defun fuse--mode-init ()
 	(if (equal system-type 'windows-nt)
