@@ -114,10 +114,10 @@
 	  (process-send-string fuse--daemon-proc (message-to-string msg)))))
 
 
+(require 'auto-complete)
 (defvar fuse--ac-cache '())
 
 (defvar ac-source-fuse-mode
-  (fuse--debug-log "foo")
   '((candidates . fuse--ac-cache)))
 
 (defun ac-complete-fuse-mode ()
