@@ -71,6 +71,10 @@
   (with-current-buffer (get-buffer-create "fuse-log")
 	(insert msg)))
 
+(defun fuse--debug-log (msg)
+  (with-current-buffer (get-buffer-create "fuse-debug-log")
+	(insert msg)))
+
 
 (defun fuse--request-services ()
   (let* ((request (make-request :Name "Subscribe" :Id 0
@@ -117,90 +121,115 @@
   (auto-complete '(ac-source-fuse-mode)))
 
 (defun fuse--filter (proc msg)
-  (message (concat "Filter: " msg))
   (setf fuse--buffer (concat fuse--buffer msg))
-  (let ((message-split (s-split-up-to "\n" fuse--buffer 3)))
-	(when (>= (length message-split) 3)
-	  (let ((message (make-message :Type (nth 0 message-split)
-								   :Length (nth 1 message-split)
-								   :Payload (nth 2 message-split))))
+  (let ((message-split (s-split-up-to "\n" fuse--buffer 2)))
+	(when (>= (length message-split) 2)
+	  (let ((msg-len (string-to-number (nth 1 message-split))))
+		(when (>= (length (nth 2 message-split)) msg-len)
+		  (let* ((message (make-message
+						   :Length msg-len
+						  :Type (nth 1 message-split)
+						  :Payload (substring-no-properties (nth 2 message-split) 0 msg-len))))
 
-		(if (= (length message-split) 4)
-			(setf fuse--buffer (nth 3 message-split))
-		  (setf fuse--buffer ""))
-		(cond ((string= (message-Type message) "Response") (let* ((decoded-payload (json-read-from-string (message-Payload message)))
-																 (response (make-response
-																			:Id (cdra 'Id decoded-payload)
-																			:Status (cdra 'Status decoded-payload)
-																			:Errors (cdra 'Errors decoded-payload)))
-																 (princ (fuse--serializable message))
-															 )))
-			  ((string= (message-Type message) "Event")(let* ((decoded-payload (json-read-from-string (message-payload message)))
-															  (event (make-event :Name (cdra 'Name decoded-payload)
-																				 :SubscriptionId (cdra 'SubscriptionId decoded-payload)
-																				 :Data (cdra 'Data decoded-payload)))
-															  (decoded-data (cdr (assoc 'Data decoded-payload)))
-															  (data (make-issue-detected-data :BuildId (cdra 'BuildId decoded-data)
-																							  :IssueType (cdra 'IssueType decoded-data)
-																							  :Path (cdra 'Path decoded-data)
-																							  :StartPosition (cdra 'StartPosition decoded-data)
-																							  :EndPosition (cdra 'EndPosition decoded-data)
-																							  :ErrorCode (cdra 'ErrorCode decoded-data)
-																							  :Message (cdra 'Message decoded-data))))
-														 (fuse--log-issue-detected data))))))))
+			(setf fuse--buffer (substring (nth 2 message-split) msg-len (length (nth 2 message-split))))
 
-;{
-;    "Id": 42, // Id of request
-;    "Status": "Success",
-;    "Result":
-;    {
-;        "IsUpdatingCache": false, // If true you should consider trying again later
-;        "CodeSuggestions":
-;        [
-;            {
-;                "Suggestion": "<suggestion>",
-;                "PreText": "<pretext>",
-;                "PostText": "<posttext>",
-;                "Type": "<datatype>",
-;                "ReturnType": "<datatype>",
-;                "AccessModifiers": [ "<accessmodifier>", ... ],
-;                "FieldModifiers": [ "<fieldmodifier>", ... ],
-;                "MethodArguments":
-;                [
-;                    { "Name": "<name>", "ArgType": "<datatype>", "IsOut": "<false|true>" },
-;                    ...
-;                ],
-;            },
-;            ...
-;            ],
-;    }
-;}
+			(fuse--debug-log (message-Payload message))
+			(cond ((string= (message-Type message) "Response")
+				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
+						  (response
+						   (make-response
+							:Id (cdra 'Id decoded-payload)
+							:Status (cdra 'Status decoded-payload)
+							:Errors (cdra 'Errors decoded-payload)
+							:Result (cdra 'Result decoded-data)))
+						  (cond ((= (response-Id response) 2)
+								 (let ((code-com-resp
+										(make-code-completion-response
+										 :IsUpdatingCache (cdra 'IsUpdatingCache (response-Result response))
+										 :CodeSuggestions (cdra 'CodeSuggestions (response-Result response)))))
+								   (-each (code-completion-response-CodeSuggestions code-com-resp)
+									 (lambda (sugg)
+									   (let ((code-suggestion
+											  (make-code-suggestions
+											   :Suggestion (cdra 'Suggestion sugg)
+											   :PreText (cdra 'PreText sugg)
+											   :PostText (cdra 'PostText sugg)
+											   :Type (cdra 'Type sugg)
+											   :ReturnType (cdra 'ReturnType sugg)
+											   :AccessModifiers (cdra 'AccessModifiers sugg)
+											   :FieldModifiers (cdra 'FieldModifiers sugg)
+											   :MethodArguments (cdra 'MethodArguments sugg))))
+										 (fuse--log (code-suggestions-Suggestion code-suggestion))))))))
 
-(defun fuse--mode-init ()
-  (if (equal system-type 'windows-nt)
+
+						  )))
+				  ((string= (message-Type message) "Event")
+				   (let* ((decoded-payload (json-read-from-string (message-payload message)))
+						  (event (make-event :Name (cdra 'Name decoded-payload)
+											 :SubscriptionId (cdra 'SubscriptionId decoded-payload)
+											 :Data (cdra 'Data decoded-payload)))
+						  (decoded-data (cdr (assoc 'Data decoded-payload)))
+						  (data (make-issue-detected-data :BuildId (cdra 'BuildId decoded-data)
+														  :IssueType (cdra 'IssueType decoded-data)
+														  :Path (cdra 'Path decoded-data)
+														  :StartPosition (cdra 'StartPosition decoded-data)
+														  :EndPosition (cdra 'EndPosition decoded-data)
+														  :ErrorCode (cdra 'ErrorCode decoded-data)
+														  :Message (cdra 'Message decoded-data))))
+					 (fuse--log-issue-detected data))))))))))
+
+										;{
+										;    "Id": 42, // Id of request
+										;    "Status": "Success",
+										;    "Result":
+										;    {
+										;        "IsUpdatingCache": false, // If true you should consider trying again later
+										;        "CodeSuggestions":
+										;        [
+										;            {
+										;                "Suggestion": "<suggestion>",
+										;                "PreText": "<pretext>",
+										;                "PostText": "<posttext>",
+										;                "Type": "<datatype>",
+										;                "ReturnType": "<datatype>",
+										;                "AccessModifiers": [ "<accessmodifier>", ... ],
+										;                "FieldModifiers": [ "<fieldmodifier>", ... ],
+										;                "MethodArguments":
+										;                [
+										;                    { "Name": "<name>", "ArgType": "<datatype>", "IsOut": "<false|true>" },
+										;                    ...
+										;                ],
+										;            },
+										;            ...
+										;            ],
+										;    }
+										;}
+
+  (defun fuse--mode-init ()
+	(if (equal system-type 'windows-nt)
+		(setf fuse--daemon-proc (start-process "fuse-mode"
+											   "fuse-mode"
+											   "C:/Program Files (x86)/Fuse/Fuse.exe" "daemon-client" "fuse-mode"))
 	  (setf fuse--daemon-proc (start-process "fuse-mode"
 											 "fuse-mode"
-											 "C:/Program Files (x86)/Fuse/Fuse.exe" "daemon-client" "fuse-mode"))
-	(setf fuse--daemon-proc (start-process "fuse-mode"
-										   "fuse-mode"
-										   "/usr/local/bin/fuse" "daemon-client" "fuse-mode")))
+											 "/usr/local/bin/fuse" "daemon-client" "fuse-mode")))
 
-  (set-process-filter fuse--daemon-proc 'fuse--filter)
-  (set-process-sentinel fuse--daemon-proc (lambda (proc msg) ))
-  (fuse--request-services))
+	(set-process-filter fuse--daemon-proc 'fuse--filter)
+	(set-process-sentinel fuse--daemon-proc (lambda (proc msg) ))
+	(fuse--request-services))
 
 
 
 
 ;;;###autoload
-(define-minor-mode fuse-mode
-  "The Fuse minor mode."
-  :lighter "fuse"
-  :keymap (make-sparse-keymap))
+  (define-minor-mode fuse-mode
+	"The Fuse minor mode."
+	:lighter "fuse"
+	:keymap (make-sparse-keymap))
 
 ;;;###autoload
-(add-hook 'fuse-mode-hook 'fuse--mode-init)
+  (add-hook 'fuse-mode-hook 'fuse--mode-init)
 
-(provide 'fuse-mode)
+  (provide 'fuse-mode)
 
  ;;; fuse-mode.el ends here
