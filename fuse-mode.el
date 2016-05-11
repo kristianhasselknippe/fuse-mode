@@ -7,6 +7,13 @@
 (defun cdra (key alist)
   (cdr (assoc key alist)))
 
+(defun line-offset ()
+  (interactive)
+  (let* ((p2 (line-beginning-position))
+		 (p1 (point))
+		 (p-res (- p1 p2)))
+	p-res))
+
 (defvar fuse--structs '())
 
 (defun fuse--serializable (struct)
@@ -39,25 +46,25 @@
 (setq fuse--buffer "")
 (setq fuse--daemon-proc nil)
 
-(defstruct-and-to-obj event name subscription-id data)
-(defstruct-and-to-obj issue-detected-data build-id issue-type path start-pos end-pos error-code message)
-(defstruct-and-to-obj subscribe-request-args filter replay id)
-(defstruct-and-to-obj caret-position line character)
-(defstruct-and-to-obj code-completion-request-args syntax-type path text caret-position)
-(defstruct-and-to-obj request name id arguments)
-(defstruct-and-to-obj response id status result errors)
-(defstruct-and-to-obj message type length payload)
-(defstruct-and-to-obj subscription-response id status error results)
+(defstruct-and-to-obj event Name SubscriptionId Data)
+(defstruct-and-to-obj issue-detected-data BuildId IssueType Path StartPosition EndPosition ErrorCode Message)
+(defstruct-and-to-obj subscribe-request-args Filter Replay Id)
+(defstruct-and-to-obj caret-position Line Character)
+(defstruct-and-to-obj code-completion-request-args SyntaxType Path Text CaretPosition)
+(defstruct-and-to-obj request Name Id Arguments)
+(defstruct-and-to-obj response Id Status Result Errors)
+(defstruct-and-to-obj message Type Length Payload)
+(defstruct-and-to-obj subscription-response Id Status Error Results)
 
-(defstruct-and-to-obj method-argument name arg-type is-out)
-(defstruct-and-to-obj code-suggestions suggestion pre-text post-text type return-type access-modifiers field-modifiers method-arguments)
-(defstruct-and-to-obj code-completion-response is-updating-cache code-suggestions)
+(defstruct-and-to-obj method-argument name ArgType IsOut)
+(defstruct-and-to-obj code-suggestions Suggestion PreText PostText Type ReturnType AccessModifiers FieldModifiers MethodArguments)
+(defstruct-and-to-obj code-completion-response IsUpdatingCache CodeSuggestions)
 
 
 
 (defun message-to-string (message)
   (unless (message-p message) (error "message-to-string only handles message types"))
-  (format "%s\n%d\n%s\n" (message-type message) (message-length message) (message-payload message)))
+  (format "%s\n%d\n%s\n" (message-Type message) (message-Length message) (message-Payload message)))
 
 
 (defun fuse--log (msg)
@@ -66,40 +73,40 @@
 
 
 (defun fuse--request-services ()
-  (let* ((request (make-request :name "Subscribe" :id 0
-								:arguments (make-subscribe-request-args
-											:filter "Fuse.BuildIssueDetected" :replay t :id 1)))
+  (let* ((request (make-request :Name "Subscribe" :Id 0
+								:Arguments (make-subscribe-request-args
+											:Filter "Fuse.BuildIssueDetected" :Replay t :Id 1)))
 		   (payload (json-encode (request-to-obj request)))
-		   (message (make-message :type "Request"
-								  :length (length payload)
-								  :payload payload)))
+		   (message (make-message :Type "Request"
+								  :Length (length payload)
+								  :Payload payload)))
 	  (process-send-string fuse--daemon-proc (message-to-string message))))
 
 
 (defun fuse--log-issue-detected (data)
   (fuse--log (concat
-			  "ErrorCode: " (issue-detected-data-error-code data)
-			  "\nPath: " (issue-detected-data-path data)
-			  "\nLine: " (number-to-string (cdra 'Line (issue-detected-data-start-pos data))))))
+			  "ErrorCode: " (issue-detected-data-ErrorCode data)
+			  "\nPath: " (issue-detected-data-Path data)
+			  "\nLine: " (number-to-string (cdra 'Line (issue-detected-data-StartPosition data))))))
 
 
 (defun fuse--request-code-completion ()
   (interactive)
-  (let* ((request (make-request :name "Fuse.GetCodeSuggestions"
-								:id 2
-								:arguments (make-code-completion-request-args
-											:syntax-type (s-upcase (car (last (s-split "\\." (buffer-file-name)))))
-											:path (s-replace "/" "\\" (buffer-file-name))
-											:text (buffer-substring-no-properties (point-min) (point-max))
-											:caret-position (make-caret-position
-															 :line (count-lines 1 (point))
-															 :character (current-column))))))
+  (let* ((request (make-request :Name "Fuse.GetCodeSuggestions"
+								:Id 2
+								:Arguments (make-code-completion-request-args
+											:SyntaxType (s-upcase (car (last (s-split "\\." (buffer-file-name)))))
+											:Path (s-replace "/" "\\" (buffer-file-name))
+											:Text (buffer-substring-no-properties (point-min) (point-max))
+											:CaretPosition (make-caret-position
+															 :Line (count-lines 1 (point))
+															 :Character (line-offset))))))
 	(let* ((req-obj (fuse--serializable request))
 		   (req-obj-json (json-encode req-obj))
-		   (msg (make-message :type "Request"
-								  :length (length req-obj-json)
-								  :payload req-obj-json)))
-	  (princ (message-to-string msg))
+		   (msg (make-message :Type "Request"
+								  :Length (length req-obj-json)
+								  :Payload req-obj-json)))
+	  (message (message-to-string msg))
 	  (process-send-string fuse--daemon-proc (message-to-string msg)))))
 
 (defvar ac-source-fuse-mode
@@ -110,38 +117,36 @@
   (auto-complete '(ac-source-fuse-mode)))
 
 (defun fuse--filter (proc msg)
-  (message msg)
+  (message (concat "Filter: " msg))
   (setf fuse--buffer (concat fuse--buffer msg))
   (let ((message-split (s-split-up-to "\n" fuse--buffer 3)))
 	(when (>= (length message-split) 3)
-	  (let ((message (make-message :type (nth 0 message-split)
-								   :length (nth 1 message-split)
-								   :payload (nth 2 message-split))))
+	  (let ((message (make-message :Type (nth 0 message-split)
+								   :Length (nth 1 message-split)
+								   :Payload (nth 2 message-split))))
 
 		(if (= (length message-split) 4)
 			(setf fuse--buffer (nth 3 message-split))
 		  (setf fuse--buffer ""))
-		(cond ((string= (message-type message) "Response") (let ((decoded-payload (json-read-from-string (message-payload message))))
-															 (princ (fuse--serializable message))
-
-															 ;(cond ((string=
-																  (response (make-response
-																			 :id (cdra 'Id decoded-payload)
-																			 :status (cdra 'Status decoded-payload)
-																			 :errors (cdra 'Errors decoded-payload)))
-															 ))
-			  ((string= (message-type message) "Event")(let* ((decoded-payload (json-read-from-string (message-payload message)))
-															  (event (make-event :name (cdra 'Name decoded-payload)
-																				 :subscription-id (cdra 'SubscriptionId decoded-payload)
-																				 :data (cdra 'Data decoded-payload)))
+		(cond ((string= (message-Type message) "Response") (let* ((decoded-payload (json-read-from-string (message-Payload message)))
+																 (response (make-response
+																			:Id (cdra 'Id decoded-payload)
+																			:Status (cdra 'Status decoded-payload)
+																			:Errors (cdra 'Errors decoded-payload)))
+																 (princ (fuse--serializable message))
+															 )))
+			  ((string= (message-Type message) "Event")(let* ((decoded-payload (json-read-from-string (message-payload message)))
+															  (event (make-event :Name (cdra 'Name decoded-payload)
+																				 :SubscriptionId (cdra 'SubscriptionId decoded-payload)
+																				 :Data (cdra 'Data decoded-payload)))
 															  (decoded-data (cdr (assoc 'Data decoded-payload)))
-															  (data (make-issue-detected-data :build-id (cdra 'BuildId decoded-data)
-																							  :issue-type (cdra 'IssueType decoded-data)
-																							  :path (cdra 'Path decoded-data)
-																							  :start-pos (cdra 'StartPosition decoded-data)
-																							  :end-pos (cdra 'EndPosition decoded-data)
-																							  :error-code (cdra 'ErrorCode decoded-data)
-																							  :message (cdra 'Message decoded-data))))
+															  (data (make-issue-detected-data :BuildId (cdra 'BuildId decoded-data)
+																							  :IssueType (cdra 'IssueType decoded-data)
+																							  :Path (cdra 'Path decoded-data)
+																							  :StartPosition (cdra 'StartPosition decoded-data)
+																							  :EndPosition (cdra 'EndPosition decoded-data)
+																							  :ErrorCode (cdra 'ErrorCode decoded-data)
+																							  :Message (cdra 'Message decoded-data))))
 														 (fuse--log-issue-detected data))))))))
 
 ;{
