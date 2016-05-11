@@ -118,7 +118,8 @@
 (defvar fuse--ac-cache '())
 
 (defvar ac-source-fuse-mode
-  '((candidates . fuse--ac-cache)))
+  '((candidates . fuse--ac-cache)
+	(prefix . ".")))
 
 (defun ac-complete-fuse-mode ()
   (interactive)
