@@ -128,12 +128,12 @@
 		(when (>= (length (nth 2 message-split)) msg-len)
 		  (let* ((message (make-message
 						   :Length msg-len
-						  :Type (nth 1 message-split)
-						  :Payload (substring-no-properties (nth 2 message-split) 0 msg-len))))
+						   :Type (nth 0 message-split)
+						   :Payload (substring-no-properties (nth 2 message-split) 0 msg-len))))
 
 			(setf fuse--buffer (substring (nth 2 message-split) msg-len (length (nth 2 message-split))))
 
-			(fuse--debug-log (message-Payload message))
+										;(fuse--debug-log (message-Payload message))
 			(cond ((string= (message-Type message) "Response")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
 						  (response
@@ -141,28 +141,29 @@
 							:Id (cdra 'Id decoded-payload)
 							:Status (cdra 'Status decoded-payload)
 							:Errors (cdra 'Errors decoded-payload)
-							:Result (cdra 'Result decoded-data)))
-						  (cond ((= (response-Id response) 2)
-								 (let ((code-com-resp
-										(make-code-completion-response
-										 :IsUpdatingCache (cdra 'IsUpdatingCache (response-Result response))
-										 :CodeSuggestions (cdra 'CodeSuggestions (response-Result response)))))
-								   (-each (code-completion-response-CodeSuggestions code-com-resp)
-									 (lambda (sugg)
-									   (let ((code-suggestion
-											  (make-code-suggestions
-											   :Suggestion (cdra 'Suggestion sugg)
-											   :PreText (cdra 'PreText sugg)
-											   :PostText (cdra 'PostText sugg)
-											   :Type (cdra 'Type sugg)
-											   :ReturnType (cdra 'ReturnType sugg)
-											   :AccessModifiers (cdra 'AccessModifiers sugg)
-											   :FieldModifiers (cdra 'FieldModifiers sugg)
-											   :MethodArguments (cdra 'MethodArguments sugg))))
-										 (fuse--log (code-suggestions-Suggestion code-suggestion))))))))
+							:Result (cdra 'Result decoded-payload))))
+					 (cond ((= (response-Id response) 2)
+
+							(let ((code-com-resp
+								   (make-code-completion-response
+									:IsUpdatingCache (cdra 'IsUpdatingCache (response-Result response))
+									:CodeSuggestions (cdra 'CodeSuggestions (response-Result response)))))
+							  (-each (append (code-completion-response-CodeSuggestions code-com-resp) nil)
+								(lambda (sugg)
+								  (let ((code-suggestion
+										 (make-code-suggestions
+										  :Suggestion (cdra 'Suggestion sugg)
+										  :PreText (cdra 'PreText sugg)
+										  :PostText (cdra 'PostText sugg)
+										  :Type (cdra 'Type sugg)
+										  :ReturnType (cdra 'ReturnType sugg)
+										  :AccessModifiers (cdra 'AccessModifiers sugg)
+										  :FieldModifiers (cdra 'FieldModifiers sugg)
+										  :MethodArguments (cdra 'MethodArguments sugg))))
+									(fuse--debug-log (concat (code-suggestions-Suggestion code-suggestion) "\n"))))))))
 
 
-						  )))
+					 ))
 				  ((string= (message-Type message) "Event")
 				   (let* ((decoded-payload (json-read-from-string (message-payload message)))
 						  (event (make-event :Name (cdra 'Name decoded-payload)
