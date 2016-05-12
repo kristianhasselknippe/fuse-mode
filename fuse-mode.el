@@ -1,4 +1,4 @@
-(require 'cl)
+(require 'cl-lib)
 (require 'dash)
 (require 's)
 (require 'json)
@@ -114,16 +114,33 @@
 	  (process-send-string fuse--daemon-proc (message-to-string msg)))))
 
 
-(require 'auto-complete)
-(defvar fuse--ac-cache '())
+;(require 'auto-complete)
+;(defvar fuse--ac-cache '())
+;
+;(defvar ac-source-fuse-mode
+;  '((candidates . fuse--ac-cache)
+;	(prefix . ".")))
+;
+;(defun ac-complete-fuse-mode ()
+;  (interactive)
+										;  (auto-complete '(ac-source-fuse-mode)))
 
-(defvar ac-source-fuse-mode
-  '((candidates . fuse--ac-cache)
-	(prefix . ".")))
+(defvar company-fuse-backend '())
 
-(defun ac-complete-fuse-mode ()
-  (interactive)
-  (auto-complete '(ac-source-fuse-mode)))
+(require 'company)
+
+(defun fuse--company-backend (command &optional arg &rest ignored)
+  (interactive (list 'interactive))
+
+  (cl-case command
+	(interactive (company-begin-backend 'fuse--company-backend))
+	(prefix (and (eq major-mode 'fundamental-mode)
+				 (company-grab-symbol)))
+	(candidates
+	 (cl-remove-if-not
+	  (lambda (c) (string-prefix-p arg c))
+	  sample-completions))))
+
 
 (defun fuse--filter (proc msg)
   (setf fuse--buffer (concat fuse--buffer msg))
