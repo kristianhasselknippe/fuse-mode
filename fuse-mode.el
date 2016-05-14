@@ -65,7 +65,7 @@
 
 (defun message-to-string (message)
   (unless (message-p message) (error "message-to-string only handles message types"))
-  (format "%s\n%d\n%s\n" (message-Type message) (message-Length message) (message-Payload message)))
+  (format "%s\n%d\n%s" (message-Type message) (message-Length message) (message-Payload message)))
 
 
 (defun fuse--log (msg)
@@ -100,19 +100,19 @@
   (let* ((request (make-request :Name "Fuse.GetCodeSuggestions"
 								:Id 2
 								:Arguments (make-code-completion-request-args
-											:SyntaxType (s-upcase (car (last (s-split "\\." (buffer-file-name)))))
+											:SyntaxType (car (last (s-split "\\." (buffer-file-name))))
 											:Path (s-replace "/" "\\" (buffer-file-name))
 											:Text (buffer-substring-no-properties (point-min) (point-max))
 											:CaretPosition (make-caret-position
 															 :Line (count-lines 1 (point))
 															 :Character (line-offset))))))
 	(let* ((req-obj (fuse--serializable request))
-		   (req-obj-json (json-encode req-obj))
-		   (msg (make-message :Type "Request"
-								  :Length (length req-obj-json)
+		   (req-obj-json (json-encode req-obj)))
+	  (let ((message-to-send (make-message :Type "Request"
+								  :Length (1+ (length req-obj-json))
 								  :Payload req-obj-json)))
-	  (message (message-to-string msg))
-	  (process-send-string fuse--daemon-proc (message-to-string msg)))))
+	  (fuse--debug-log (message-to-string message-to-send))
+	  (process-send-string fuse--daemon-proc (message-to-string message-to-send))))))
 
 
 ;(require 'auto-complete)
@@ -145,6 +145,7 @@
 
 (defun fuse--filter (proc msg)
   (setf fuse--buffer (concat fuse--buffer msg))
+  (fuse--debug-log msg)
   (let ((message-split (s-split-up-to "\n" fuse--buffer 2)))
 	(when (>= (length message-split) 2)
 	  (let ((msg-len (string-to-number (nth 1 message-split))))
@@ -174,7 +175,6 @@
 							  (setq fuse--completions-cache '())
 							  (-each (append (code-completion-response-CodeSuggestions code-com-resp) nil)
 								(lambda (sugg)
-								  (fuse--debug-log "f")
 								  (let ((code-suggestion
 										 (make-code-suggestions
 										  :Suggestion (cdra 'Suggestion sugg)
@@ -186,7 +186,7 @@
 										  :FieldModifiers (cdra 'FieldModifiers sugg)
 										  :MethodArguments (cdra 'MethodArguments sugg))))
 									(setq fuse--completions-cache (append fuse--completions-cache (list (code-suggestions-Suggestion code-suggestion)))))))
-							  (fuse--debug-log "Calling company complete")
+							  (fuse--debug-log "\nCalling company complete")
 							  (company-begin-backend 'fuse--company-backend))))))
 				  ((string= (message-Type message) "Event")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
