@@ -3,6 +3,7 @@
 (require 's)
 (require 'json)
 (require 'edebug)
+(require 'company)
 
 (defun cdra (key alist)
   (cdr (assoc key alist)))
@@ -125,21 +126,21 @@
 ;  (interactive)
 										;  (auto-complete '(ac-source-fuse-mode)))
 
-(defvar company-fuse-backend '())
+(defvar fuse--completions-cache '())
 
-(require 'company)
+
+(defun fuse--company-complete ()
+  (interactive)
+  (fuse--request-code-completion))
+
 
 (defun fuse--company-backend (command &optional arg &rest ignored)
   (interactive (list 'interactive))
 
   (cl-case command
 	(interactive (company-begin-backend 'fuse--company-backend))
-	(prefix (and (eq major-mode 'fundamental-mode)
-				 (company-grab-symbol)))
-	(candidates
-	 (cl-remove-if-not
-	  (lambda (c) (string-prefix-p arg c))
-	  sample-completions))))
+	(prefix "")
+	(candidates fuse--completions-cache)))
 
 
 (defun fuse--filter (proc msg)
@@ -170,7 +171,7 @@
 								   (make-code-completion-response
 									:IsUpdatingCache (cdra 'IsUpdatingCache (response-Result response))
 									:CodeSuggestions (cdra 'CodeSuggestions (response-Result response)))))
-							  (setq fuse--ac-cache '())
+							  (setq fuse--completions-cache '())
 							  (-each (append (code-completion-response-CodeSuggestions code-com-resp) nil)
 								(lambda (sugg)
 								  (fuse--debug-log "f")
@@ -184,9 +185,9 @@
 										  :AccessModifiers (cdra 'AccessModifiers sugg)
 										  :FieldModifiers (cdra 'FieldModifiers sugg)
 										  :MethodArguments (cdra 'MethodArguments sugg))))
-									(setq fuse--ac-cache (append fuse--ac-cache (list (code-suggestions-Suggestion code-suggestion)))))))
-							  (fuse--debug-log "Calling ac complete")
-							  (ac-complete-fuse-mode))))))
+									(setq fuse--completions-cache (append fuse--completions-cache (list (code-suggestions-Suggestion code-suggestion)))))))
+							  (fuse--debug-log "Calling company complete")
+							  (company-begin-backend 'fuse--company-backend))))))
 				  ((string= (message-Type message) "Event")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
 						  (event (make-event :Name (cdra 'Name decoded-payload)
