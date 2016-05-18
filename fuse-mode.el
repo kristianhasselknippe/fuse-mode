@@ -83,7 +83,7 @@
 											:Filter "Fuse.BuildIssueDetected" :Replay t :Id 1)))
 		   (payload (json-encode (request-to-obj request)))
 		   (message (make-message :Type "Request"
-								  :Length (length payload)
+								  :Length (- (length payload) 1)
 								  :Payload payload)))
 	  (process-send-string fuse--daemon-proc (message-to-string message))))
 
@@ -105,14 +105,16 @@
 											:Text (buffer-substring-no-properties (point-min) (point-max))
 											:CaretPosition (make-caret-position
 															 :Line (count-lines 1 (point))
-															 :Character (line-offset))))))
+															 :Character (+ (line-offset) 1))))))
 	(let* ((req-obj (fuse--serializable request))
 		   (req-obj-json (json-encode req-obj)))
 	  (let ((message-to-send (make-message :Type "Request"
-								  :Length (1+ (length req-obj-json))
+								  :Length  (length req-obj-json)
 								  :Payload req-obj-json)))
-	  (fuse--debug-log (message-to-string message-to-send))
-	  (process-send-string fuse--daemon-proc (message-to-string message-to-send))))))
+		(let ((the-message (message-to-string message-to-send)))
+		  (fuse--debug-log (concat the-message "\n"))
+		  (fuse--debug-log "about to send string\n")
+		  (process-send-string fuse--daemon-proc the-message))))))
 
 
 ;(require 'auto-complete)
@@ -181,7 +183,8 @@
 										  :PreText (cdra 'PreText sugg)
 										  :PostText (cdra 'PostText sugg)
 										  :Type (cdra 'Type sugg)
-										  :ReturnType (cdra 'ReturnType sugg)
+										  :ReturnType (cdra 'ReturnType
+sugg)
 										  :AccessModifiers (cdra 'AccessModifiers sugg)
 										  :FieldModifiers (cdra 'FieldModifiers sugg)
 										  :MethodArguments (cdra 'MethodArguments sugg))))
@@ -216,7 +219,7 @@
 											 "/usr/local/bin/fuse" "daemon-client" "fuse-mode")))
 
 	(set-process-filter fuse--daemon-proc 'fuse--filter)
-	(set-process-sentinel fuse--daemon-proc (lambda (proc msg) ))
+	(set-process-sentinel fuse--daemon-proc (lambda (proc msg) (fuse--debug-log msg) ))
 	(fuse--request-services))
 
 
