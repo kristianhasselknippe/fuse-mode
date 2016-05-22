@@ -214,6 +214,28 @@
 
 
 
+;;Here comes some utilities for creating new Fuse related files
+(defun fuse--file-created ()
+  (when (stringp buffer-file-name)
+	(cond
+	 ((string-match "\\.js\\'" buffer-file-name) (insert "var Observable = require('FuseJS/Observable');
+
+
+module.exports = {
+
+};")
+    (js2-mode))
+	 ((string-match "\\.ux\\'" buffer-file-name)
+	  (let* ((class-name (file-name-base buffer-file-name))
+			 (content (concat "<Panel ux:Class=\"" class-name "\">\n</Panel>")))
+		(insert content)
+		(nxml-mode)))
+	 ((string-match "\\.unoproj\\'" buffer-file-name)
+	  (json-mode)))))
+
+(add-hook 'find-file-hook 'fuse--file-created)
+
+
 
 ;;;###autoload
 (define-minor-mode fuse-mode
