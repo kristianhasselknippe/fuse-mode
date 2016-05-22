@@ -102,7 +102,9 @@
 								:Id 2
 								:Arguments (make-code-completion-request-args
 											:SyntaxType (car (last (s-split "\\." (buffer-file-name))))
-											:Path (s-replace "/" "\\" (buffer-file-name))
+											:Path (if (equal system-type 'windows-nt)
+													  (s-replace "/" "\\" (buffer-file-name))
+													(buffer-file-name))
 											:Text (buffer-substring-no-properties (point-min) (point-max))
 											:CaretPosition (make-caret-position
 															:Line (count-lines 1 (point))
@@ -119,14 +121,17 @@
 
 (defvar fuse--completions-cache '())
 
+
 (defun fuse--company-complete ()
   (interactive)
   (fuse--request-code-completion))
 
+(defun fuse--show-completions ()
+  (fuse--debug-log "we are tryign to show")
+  (company-begin-with fuse--completions-cache))
 
 (defun fuse--company-backend (command &optional arg &rest ignored)
   (interactive (list 'interactive))
-
   (cl-case command
 	(interactive (company-begin-backend 'fuse--company-backend))
 	(prefix "")
@@ -176,7 +181,7 @@
 										  :MethodArguments (cdra 'MethodArguments sugg))))
 									(setq fuse--completions-cache (append fuse--completions-cache (list (code-suggestions-Suggestion code-suggestion)))))))
 							  (fuse--debug-log "\nCalling company complete\n")
-							  (company-begin-backend 'fuse--company-backend))))))
+							  (fuse--show-completions))))))
 
 				  ((string= (message-Type message) "Event")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
@@ -197,6 +202,7 @@
 
 
 (defun fuse--mode-init ()
+  (global-company-mode)
   (when (equal fuse--daemon-proc nil)
 	(if (equal system-type 'windows-nt)
 		(setf fuse--daemon-proc (start-process "fuse-mode"
