@@ -96,8 +96,10 @@
 			  "\nLine: " (number-to-string (cdra 'Line (issue-detected-data-StartPosition data))))))
 
 
-(defun fuse--request-code-completion ()
+(defvar fuse--current-completion-callback nil)
+(defun fuse--request-code-completion (callback)
   (interactive)
+  (setf fuse--current-completion-callback callback)
   (let* ((request (make-request :Name "Fuse.GetCodeSuggestions"
 								:Id 2
 								:Arguments (make-code-completion-request-args
@@ -122,20 +124,13 @@
 (defvar fuse--completions-cache '())
 
 
-(defun fuse--company-complete ()
-  (interactive)
-  (fuse--request-code-completion))
-
-(defun fuse--show-completions ()
-  (fuse--debug-log "we are tryign to show")
-  (company-begin-with fuse--completions-cache))
-
 (defun fuse--company-backend (command &optional arg &rest ignored)
   (interactive (list 'interactive))
   (cl-case command
 	(interactive (company-begin-backend 'fuse--company-backend))
-	(prefix "")
-	(candidates fuse--completions-cache)))
+	(prefix (company-grab-symbol-cons "\\<\\|=\"" 2))
+	(candidates (cons :async (lambda (callback)
+							   (fuse--request-code-completion callback))))))
 
 
 (defun fuse--filter (proc msg)
@@ -181,7 +176,8 @@
 										  :MethodArguments (cdra 'MethodArguments sugg))))
 									(setq fuse--completions-cache (append fuse--completions-cache (list (code-suggestions-Suggestion code-suggestion)))))))
 							  (fuse--debug-log "\nCalling company complete\n")
-							  (fuse--show-completions))))))
+							  (funcall fuse--current-completion-callback fuse--completions-cache)
+							  )))))
 
 				  ((string= (message-Type message) "Event")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
