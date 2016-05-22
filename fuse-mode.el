@@ -34,13 +34,13 @@
 
 (defmacro defstruct-and-to-obj (name &rest args)
   (append `(progn) `((cl-defstruct ,name ,@args)
-		  ,(append `(defun ,(intern (format "%s-to-obj" name)) (arg))
-					 `(,(let ((body `()))
-						  (-each args (lambda (a)
-									 (setq body (append body
-											 `(,(intern (format ":%s" a)))
-											 `((fuse--serializable (,(intern (format "%s-%s" name a)) arg)))))))
-						  `(list ,@body)))))
+					 ,(append `(defun ,(intern (format "%s-to-obj" name)) (arg))
+							  `(,(let ((body `()))
+								   (-each args (lambda (a)
+												 (setq body (append body
+																	`(,(intern (format ":%s" a)))
+																	`((fuse--serializable (,(intern (format "%s-%s" name a)) arg)))))))
+								   `(list ,@body)))))
 		  `((setq fuse--structs (append fuse--structs (list (quote ,(intern (format "%s-p" name)))))))))
 
 
@@ -62,7 +62,6 @@
 (defstruct-and-to-obj code-completion-response IsUpdatingCache CodeSuggestions)
 
 
-
 (defun message-to-string (message)
   (unless (message-p message) (error "message-to-string only handles message types"))
   (format "%s\n%d\n%s" (message-Type message) (message-Length message) (message-Payload message)))
@@ -81,11 +80,13 @@
   (let* ((request (make-request :Name "Subscribe" :Id 0
 								:Arguments (make-subscribe-request-args
 											:Filter "Fuse.BuildIssueDetected" :Replay t :Id 1)))
-		   (payload (json-encode (request-to-obj request)))
-		   (message (make-message :Type "Request"
-								  :Length (- (length payload) 1)
-								  :Payload payload)))
-	  (process-send-string fuse--daemon-proc (message-to-string message))))
+		 (payload (json-encode (request-to-obj request)))
+		 (message (make-message :Type "Request"
+								:Length (length payload)
+								:Payload payload)))
+	(let ((msg (message-to-string message)))
+	  (fuse--debug-log msg)
+	  (process-send-string fuse--daemon-proc msg))))
 
 
 (defun fuse--log-issue-detected (data)
@@ -104,32 +105,19 @@
 											:Path (s-replace "/" "\\" (buffer-file-name))
 											:Text (buffer-substring-no-properties (point-min) (point-max))
 											:CaretPosition (make-caret-position
-															 :Line (count-lines 1 (point))
-															 :Character (+ (line-offset) 1))))))
+															:Line (count-lines 1 (point))
+															:Character (+ (line-offset) 1))))))
 	(let* ((req-obj (fuse--serializable request))
 		   (req-obj-json (json-encode req-obj)))
 	  (let ((message-to-send (make-message :Type "Request"
-								  :Length  (length req-obj-json)
-								  :Payload req-obj-json)))
+										   :Length  (length req-obj-json)
+										   :Payload req-obj-json)))
 		(let ((the-message (message-to-string message-to-send)))
 		  (fuse--debug-log (concat the-message "\n"))
 		  (fuse--debug-log "about to send string\n")
 		  (process-send-string fuse--daemon-proc the-message))))))
 
-
-;(require 'auto-complete)
-;(defvar fuse--ac-cache '())
-;
-;(defvar ac-source-fuse-mode
-;  '((candidates . fuse--ac-cache)
-;	(prefix . ".")))
-;
-;(defun ac-complete-fuse-mode ()
-;  (interactive)
-										;  (auto-complete '(ac-source-fuse-mode)))
-
 (defvar fuse--completions-cache '())
-
 
 (defun fuse--company-complete ()
   (interactive)
@@ -158,8 +146,6 @@
 						   :Payload (substring-no-properties (nth 2 message-split) 0 msg-len))))
 
 			(setf fuse--buffer (substring (nth 2 message-split) msg-len (length (nth 2 message-split))))
-
-										;(fuse--debug-log (message-Payload message))
 			(cond ((string= (message-Type message) "Response")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
 						  (response
@@ -184,13 +170,14 @@
 										  :PostText (cdra 'PostText sugg)
 										  :Type (cdra 'Type sugg)
 										  :ReturnType (cdra 'ReturnType
-sugg)
+															sugg)
 										  :AccessModifiers (cdra 'AccessModifiers sugg)
 										  :FieldModifiers (cdra 'FieldModifiers sugg)
 										  :MethodArguments (cdra 'MethodArguments sugg))))
 									(setq fuse--completions-cache (append fuse--completions-cache (list (code-suggestions-Suggestion code-suggestion)))))))
-							  (fuse--debug-log "\nCalling company complete")
+							  (fuse--debug-log "\nCalling company complete\n")
 							  (company-begin-backend 'fuse--company-backend))))))
+
 				  ((string= (message-Type message) "Event")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
 						  (event (make-event :Name (cdra 'Name decoded-payload)
@@ -209,7 +196,8 @@ sugg)
 
 
 
-  (defun fuse--mode-init ()
+(defun fuse--mode-init ()
+  (when (equal fuse--daemon-proc nil)
 	(if (equal system-type 'windows-nt)
 		(setf fuse--daemon-proc (start-process "fuse-mode"
 											   "fuse-mode"
@@ -220,20 +208,20 @@ sugg)
 
 	(set-process-filter fuse--daemon-proc 'fuse--filter)
 	(set-process-sentinel fuse--daemon-proc (lambda (proc msg) (fuse--debug-log msg) ))
-	(fuse--request-services))
+	(fuse--request-services)))
 
 
 
 
 ;;;###autoload
-  (define-minor-mode fuse-mode
-	"The Fuse minor mode."
-	:lighter "fuse"
-	:keymap (make-sparse-keymap))
+(define-minor-mode fuse-mode
+  "The Fuse minor mode."
+  :lighter "fuse"
+  :keymap (make-sparse-keymap))
 
 ;;;###autoload
-  (add-hook 'fuse-mode-hook 'fuse--mode-init)
+(add-hook 'fuse-mode-hook 'fuse--mode-init)
 
-  (provide 'fuse-mode)
+(provide 'fuse-mode)
 
  ;;; fuse-mode.el ends here
