@@ -76,17 +76,7 @@
 	(insert msg)))
 
 
-(defun fuse--request-services ()
-  (let* ((request (make-request :Name "Subscribe" :Id 0
-								:Arguments (make-subscribe-request-args
-											:Filter "Fuse.BuildIssueDetected" :Replay t :Id 1)))
-		 (payload (json-encode (request-to-obj request)))
-		 (message (make-message :Type "Request"
-								:Length (length payload)
-								:Payload payload)))
-	(let ((msg (message-to-string message)))
-	  (fuse--debug-log msg)
-	  (process-send-string fuse--daemon-proc msg))))
+
 
 
 (defun fuse--log-issue-detected (data)
@@ -97,40 +87,7 @@
 
 
 (defvar fuse--current-completion-callback nil)
-(defun fuse--request-code-completion (callback)
-  (interactive)
-  (setf fuse--current-completion-callback callback)
-  (let* ((request (make-request :Name "Fuse.GetCodeSuggestions"
-								:Id 2
-								:Arguments (make-code-completion-request-args
-											:SyntaxType (car (last (s-split "\\." (buffer-file-name))))
-											:Path (if (equal system-type 'windows-nt)
-													  (s-replace "/" "\\" (buffer-file-name))
-													(buffer-file-name))
-											:Text (buffer-substring-no-properties (point-min) (point-max))
-											:CaretPosition (make-caret-position
-															:Line (count-lines 1 (point))
-															:Character (+ (line-offset) 1))))))
-	(let* ((req-obj (fuse--serializable request))
-		   (req-obj-json (json-encode req-obj)))
-	  (let ((message-to-send (make-message :Type "Request"
-										   :Length  (length req-obj-json)
-										   :Payload req-obj-json)))
-		(let ((the-message (message-to-string message-to-send)))
-		  (fuse--debug-log (concat the-message "\n"))
-		  (fuse--debug-log "about to send string\n")
-		  (process-send-string fuse--daemon-proc the-message))))))
 
-(defvar fuse--completions-cache '())
-
-
-(defun fuse--company-backend (command &optional arg &rest ignored)
-  (interactive (list 'interactive))
-  (cl-case command
-	(interactive (company-begin-backend 'fuse--company-backend))
-	(prefix (company-grab-symbol-cons "\\<\\|=\"" 2))
-	(candidates (cons :async (lambda (callback)
-							   (fuse--request-code-completion callback))))))
 
 
 (defun fuse--filter (proc msg)
@@ -197,6 +154,7 @@
 
 
 
+(defvar fuse--was-initiated 'nil)
 (defun fuse--mode-init ()
   (global-company-mode)
   (when (equal fuse--daemon-proc nil)
@@ -211,6 +169,59 @@
 	(set-process-filter fuse--daemon-proc 'fuse--filter)
 	(set-process-sentinel fuse--daemon-proc (lambda (proc msg) (fuse--debug-log msg) ))
 	(fuse--request-services)))
+
+(defun fuse--process-send-string (msg)
+  (when (equal fuse--was-initiated 'nil)
+	(fuse--mode-init))
+  (process-send-string fuse--daemon-proc msg))
+
+(defun fuse--request-services ()
+  (let* ((request (make-request :Name "Subscribe" :Id 0
+								:Arguments (make-subscribe-request-args
+											:Filter "Fuse.BuildIssueDetected" :Replay t :Id 1)))
+		 (payload (json-encode (request-to-obj request)))
+		 (message (make-message :Type "Request"
+								:Length (length payload)
+								:Payload payload)))
+	(let ((msg (message-to-string message)))
+	  (fuse--debug-log msg)
+	  (fuse--process-send-string msg))))
+
+
+(defun fuse--request-code-completion (callback)
+  (interactive)
+  (setf fuse--current-completion-callback callback)
+  (let* ((request (make-request :Name "Fuse.GetCodeSuggestions"
+								:Id 2
+								:Arguments (make-code-completion-request-args
+											:SyntaxType (car (last (s-split "\\." (buffer-file-name))))
+											:Path (if (equal system-type 'windows-nt)
+													  (s-replace "/" "\\" (buffer-file-name))
+													(buffer-file-name))
+											:Text (buffer-substring-no-properties (point-min) (point-max))
+											:CaretPosition (make-caret-position
+															:Line (count-lines 1 (point))
+															:Character (+ (line-offset) 1))))))
+	(let* ((req-obj (fuse--serializable request))
+		   (req-obj-json (json-encode req-obj)))
+	  (let ((message-to-send (make-message :Type "Request"
+										   :Length  (length req-obj-json)
+										   :Payload req-obj-json)))
+		(let ((the-message (message-to-string message-to-send)))
+		  (fuse--debug-log (concat the-message "\n"))
+		  (fuse--debug-log "about to send string\n")
+		  (fuse--process-send-string the-message))))))
+
+(defvar fuse--completions-cache '())
+
+
+(defun fuse--company-backend (command &optional arg &rest ignored)
+  (interactive (list 'interactive))
+  (cl-case command
+	(interactive (company-begin-backend 'fuse--company-backend))
+	(prefix (company-grab-symbol-cons "\\<\\|=\"" 2))
+	(candidates (cons :async (lambda (callback)
+							   (fuse--request-code-completion callback))))))
 
 
 
