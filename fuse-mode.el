@@ -117,7 +117,7 @@
 								   (make-code-completion-response
 									:IsUpdatingCache (cdra 'IsUpdatingCache (response-Result response))
 									:CodeSuggestions (cdra 'CodeSuggestions (response-Result response))))
-								  (fuse--completions-cache '()))
+								  (completions-cache '()))
 							  (-each (append (code-completion-response-CodeSuggestions code-com-resp) nil)
 								(lambda (sugg)
 								  (let ((code-suggestion
@@ -131,12 +131,10 @@
 										  :AccessModifiers (cdra 'AccessModifiers sugg)
 										  :FieldModifiers (cdra 'FieldModifiers sugg)
 										  :MethodArguments (cdra 'MethodArguments sugg))))
-									(setq fuse--completions-cache
-										  (append fuse--completions-cache
+									(setq completions-cache
+										  (append completions-cache
 												  (list (code-suggestions-Suggestion code-suggestion)))))))
-							  (fuse--debug-log "\nCalling company complete\n")
-							  (funcall fuse--current-completion-callback fuse--completions-cache)
-							  )))))
+							  (fuse--completion-callback completions-cache))))))
 
 				  ((string= (message-Type message) "Event")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
@@ -158,7 +156,6 @@
 
 (defvar fuse--was-initiated 'nil)
 (defun fuse--mode-init ()
-  (global-company-mode)
   (when (equal fuse--daemon-proc nil)
 	(if (equal system-type 'windows-nt)
 		(setf fuse--daemon-proc (start-process "fuse-mode"
@@ -190,9 +187,8 @@
 	  (fuse--process-send-string msg))))
 
 
-(defun fuse--request-code-completion (callback)
-  (interactive)
-  (setf fuse--current-completion-callback callback)
+(defun fuse--request-code-completion ()
+
   (let* ((request (make-request :Name "Fuse.GetCodeSuggestions"
 								:Id 2
 								:Arguments (make-code-completion-request-args
@@ -215,6 +211,19 @@
 		  (fuse--process-send-string the-message))))))
 
 
+(defun fuse--completion-callback (list)
+  (insert (popup-menu* list
+					   :isearch 't
+					   :isearch-filter (lambda (pattern list)
+										 (message "Pattern:")
+										 (message pattern)
+										 (-filter (lambda (i)
+												 (s-starts-with? pattern i)) list)))))
+
+(defun fuse--complete-popup ()
+  (interactive)
+  (fuse--request-code-completion))
+
 (defun fuse--company-backend (command &optional arg &rest ignored)
   (interactive (list 'interactive))
 
@@ -229,7 +238,7 @@
 	   prefix-symbols))
 	 (candidates (cons :async
 					   (lambda (callback)
-						 (fuse--request-code-completion callback))))))
+						 )))))
 
 
 
