@@ -116,8 +116,8 @@
 							(let ((code-com-resp
 								   (make-code-completion-response
 									:IsUpdatingCache (cdra 'IsUpdatingCache (response-Result response))
-									:CodeSuggestions (cdra 'CodeSuggestions (response-Result response)))))
-							  (setq fuse--completions-cache '())
+									:CodeSuggestions (cdra 'CodeSuggestions (response-Result response))))
+								  (fuse--completions-cache '()))
 							  (-each (append (code-completion-response-CodeSuggestions code-com-resp) nil)
 								(lambda (sugg)
 								  (let ((code-suggestion
@@ -131,7 +131,9 @@
 										  :AccessModifiers (cdra 'AccessModifiers sugg)
 										  :FieldModifiers (cdra 'FieldModifiers sugg)
 										  :MethodArguments (cdra 'MethodArguments sugg))))
-									(setq fuse--completions-cache (append fuse--completions-cache (list (code-suggestions-Suggestion code-suggestion)))))))
+									(setq fuse--completions-cache
+										  (append fuse--completions-cache
+												  (list (code-suggestions-Suggestion code-suggestion)))))))
 							  (fuse--debug-log "\nCalling company complete\n")
 							  (funcall fuse--current-completion-callback fuse--completions-cache)
 							  )))))
@@ -212,16 +214,22 @@
 		  (fuse--debug-log "about to send string\n")
 		  (fuse--process-send-string the-message))))))
 
-(defvar fuse--completions-cache '())
-
 
 (defun fuse--company-backend (command &optional arg &rest ignored)
   (interactive (list 'interactive))
+
+
+
   (cl-case command
 	(interactive (company-begin-backend 'fuse--company-backend))
-	(prefix (company-grab-symbol-cons "\\<\\|=\"" 2))
-	(candidates (cons :async (lambda (callback)
-							   (fuse--request-code-completion callback))))))
+	(prefix
+	 (let ((prefix-symbols (company-grab-symbol-cons ".*" 2)))
+	   (message "Symbols:")
+	   (message prefix-symbols)
+	   prefix-symbols))
+	 (candidates (cons :async
+					   (lambda (callback)
+						 (fuse--request-code-completion callback))))))
 
 
 
