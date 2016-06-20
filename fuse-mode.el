@@ -225,11 +225,8 @@
 	(let ((m (point)))
 	  (backward-char)
 	  (buffer-substring-no-properties (point) m))))
-										;this should return the char before point
-
 
 (defun fuse--word-looking-back ()
-										;make sure that if there is a space, we do not return the word, but instead just nil or empty string
   (if (equal " " (fuse--char-looking-back))
 	  ""
 	(save-excursion
@@ -238,10 +235,14 @@
 			(backward-word)
 			(buffer-substring-no-properties (point) m))))))
 
+(defun fuse--get-symbol-looking-back ()
+  ;this method should be expanded a lot
+  (fuse--word-looking-back))
+
 (defun fuse--completion-callback (list)
   (if (equal list 'nil)
 	  (message "Found no completions")
-	(let ((initial-search-value (fuse--word-looking-back)))
+	(let ((initial-search-value (fuse--get-symbol-looking-back)))
 	  (message initial-search-value)
 	  (let ((selected-value (popup-menu* (->> list (-map (lambda (item)
 														   (code-suggestions-Suggestion item)))
