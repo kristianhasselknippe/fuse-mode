@@ -1,4 +1,5 @@
 (require 'cl-lib)
+(require 'popup)
 (require 'dash)
 (require 's)
 (require 'json)
@@ -92,7 +93,6 @@
 
 (defun fuse--filter (proc msg)
   (setf fuse--buffer (concat fuse--buffer msg))
-  (fuse--debug-log msg)
   (let ((message-split (s-split-up-to "\n" fuse--buffer 2)))
 	(when (>= (length message-split) 2)
 	  (let ((msg-len (string-to-number (nth 1 message-split))))
@@ -171,7 +171,8 @@
 
 (defun fuse--process-send-string (msg)
   (when (equal fuse--was-initiated 'nil)
-	(fuse--mode-init))
+	(fuse--mode-init)
+	(setq fuse--was-initiated 't))
   (process-send-string fuse--daemon-proc msg))
 
 (defun fuse--request-services ()
@@ -188,7 +189,6 @@
 
 
 (defun fuse--request-code-completion ()
-
   (let* ((request (make-request :Name "Fuse.GetCodeSuggestions"
 								:Id 2
 								:Arguments (make-code-completion-request-args
@@ -201,45 +201,30 @@
 															:Line (count-lines 1 (point))
 															:Character (+ (line-offset) 1))))))
 	(let* ((req-obj (fuse--serializable request))
-		   (req-obj-json (json-encode req-obj)))
-	  (let ((message-to-send (make-message :Type "Request"
-										   :Length  (length req-obj-json)
-										   :Payload req-obj-json)))
-		(let ((the-message (message-to-string message-to-send)))
-		  (fuse--debug-log (concat the-message "\n"))
-		  (fuse--debug-log "about to send string\n")
-		  (fuse--process-send-string the-message))))))
+		   (req-obj-json (json-encode req-obj))
+		   (message-to-send (make-message :Type "Request"
+										  :Length  (length req-obj-json)
+										  :Payload req-obj-json))
+		   (the-message (message-to-string message-to-send)))
+	  (fuse--debug-log (concat the-message "\n"))
+	  ;(fuse--debug-log "about to send string\n")
+	  (fuse--process-send-string the-message))))
 
 
 (defun fuse--completion-callback (list)
-  (insert (popup-menu* list
-					   :isearch 't
-					   :isearch-filter (lambda (pattern list)
-										 (message "Pattern:")
-										 (message pattern)
-										 (-filter (lambda (i)
-												 (s-starts-with? pattern i)) list)))))
+  (if (equal list 'nil)
+	  (message "Found no completions")
+	(insert
+	 (let ((selected-value (popup-menu* list
+						 :isearch 't
+						 :isearch-filter (lambda (pattern list)
+										   (-filter (lambda (i)
+													  (s-starts-with? pattern i)) list))))) selected-value))))
+
 
 (defun fuse--complete-popup ()
   (interactive)
   (fuse--request-code-completion))
-
-(defun fuse--company-backend (command &optional arg &rest ignored)
-  (interactive (list 'interactive))
-
-
-
-  (cl-case command
-	(interactive (company-begin-backend 'fuse--company-backend))
-	(prefix
-	 (let ((prefix-symbols (company-grab-symbol-cons ".*" 2)))
-	   (message "Symbols:")
-	   (message prefix-symbols)
-	   prefix-symbols))
-	 (candidates (cons :async
-					   (lambda (callback)
-						 )))))
-
 
 
 ;;Here comes some utilities for creating new Fuse related files
