@@ -220,16 +220,40 @@
 	  (let ((substr (buffer-substring-no-properties (point) m)))
 		(s-chop-prefix substr selected-value)))))
 
+(defun fuse--char-looking-back()
+  (save-excursion
+	(let ((m (point)))
+	  (backward-char)
+	  (buffer-substring-no-properties (point) m))))
+										;this should return the char before point
+
+
+(defun fuse--word-looking-back ()
+										;make sure that if there is a space, we do not return the word, but instead just nil or empty string
+  (if (equal " " (fuse--char-looking-back))
+	  ""
+	(save-excursion
+	  (let ((m (point)))
+		(if
+			(backward-word)
+			(buffer-substring-no-properties (point) m))))))
+
 (defun fuse--completion-callback (list)
   (if (equal list 'nil)
 	  (message "Found no completions")
-	 (let ((selected-value (popup-menu* (-map (lambda (item)
-												(code-suggestions-Suggestion item)) list)
-						 :isearch 't
-						 :isearch-filter (lambda (pattern list)
-										   (-filter (lambda (i)
-													  (s-starts-with? pattern i)) list)))))
-	   (insert (fuse--get-necessary-completion selected-value)))))
+	(let ((initial-search-value (fuse--word-looking-back)))
+	  (message initial-search-value)
+	  (let ((selected-value (popup-menu* (->> list (-map (lambda (item)
+														   (code-suggestions-Suggestion item)))
+											  (-filter (lambda (i)
+														 (if (= (length initial-search-value) 0)
+															 i
+														   (s-starts-with? initial-search-value i)))))
+										 :isearch 't
+										 :isearch-filter (lambda (pattern list)
+														   (-filter (lambda (i)
+																	  (s-starts-with? (concat initial-search-value pattern) i)) list)))))
+		(insert (fuse--get-necessary-completion selected-value))))))
 
 
 (defun fuse--complete-popup ()
