@@ -92,6 +92,7 @@
 
 
 (defun fuse--filter (proc msg)
+  (fuse--debug-log msg)
   (setf fuse--buffer (concat fuse--buffer msg))
   (let ((message-split (s-split-up-to "\n" fuse--buffer 2)))
 	(when (>= (length message-split) 2)
@@ -133,8 +134,9 @@
 										  :MethodArguments (cdra 'MethodArguments sugg))))
 									(setq completions-cache
 										  (append completions-cache
-												  (list (code-suggestions-Suggestion code-suggestion)))))))
+												  (list code-suggestion))))))
 							  (fuse--completion-callback completions-cache))))))
+				               ;; CODE COMPLETION ^^^^^^
 
 				  ((string= (message-Type message) "Event")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
@@ -211,15 +213,23 @@
 	  (fuse--process-send-string the-message))))
 
 
+(defun fuse--get-necessary-completion (selected-value)
+  (save-excursion
+	(let ((m (point)))
+	  (backward-word)
+	  (let ((substr (buffer-substring-no-properties (point) m)))
+		(s-chop-prefix substr selected-value)))))
+
 (defun fuse--completion-callback (list)
   (if (equal list 'nil)
 	  (message "Found no completions")
-	(insert
-	 (let ((selected-value (popup-menu* list
+	 (let ((selected-value (popup-menu* (-map (lambda (item)
+												(code-suggestions-Suggestion item)) list)
 						 :isearch 't
 						 :isearch-filter (lambda (pattern list)
 										   (-filter (lambda (i)
-													  (s-starts-with? pattern i)) list))))) selected-value))))
+													  (s-starts-with? pattern i)) list)))))
+	   (insert (fuse--get-necessary-completion selected-value)))))
 
 
 (defun fuse--complete-popup ()
