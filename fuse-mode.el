@@ -220,11 +220,12 @@
 	  (let ((substr (buffer-substring-no-properties (point) m)))
 		(s-chop-prefix substr selected-value)))))
 
-(defun fuse--char-looking-back()
+(defun fuse--char-looking-back (&optional count)
   (save-excursion
 	(let ((m (point)))
-	  (backward-char)
+	  (backward-char (if (not (equal count nil)) count 1))
 	  (buffer-substring-no-properties (point) m))))
+
 
 (defun fuse--word-looking-back ()
   (if (equal " " (fuse--char-looking-back))
@@ -236,8 +237,11 @@
 			(buffer-substring-no-properties (point) m))))))
 
 (defun fuse--get-symbol-looking-back ()
-  ;this method should be expanded a lot
-  (fuse--word-looking-back))
+  (cond
+   ((equal "=\"" (fuse--char-looking-back 2)) "")
+   ((equal "<" (fuse--char-looking-back)) "")
+   (t (fuse--word-looking-back))))
+
 
 (defun fuse--completion-callback (list)
   (if (equal list 'nil)
