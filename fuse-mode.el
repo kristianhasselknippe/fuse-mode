@@ -4,7 +4,6 @@
 (require 's)
 (require 'json)
 (require 'edebug)
-(require 'company)
 
 (defun cdra (key alist)
   (cdr (assoc key alist)))
