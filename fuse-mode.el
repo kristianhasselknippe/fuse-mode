@@ -45,6 +45,8 @@
 		  `((setq fuse--structs (append fuse--structs (list (quote ,(intern (format "%s-p" name)))))))))
 
 
+(defvar fuse--buffer)
+(defvar fuse--daemon-proc)
 (setq fuse--buffer "")
 (setq fuse--daemon-proc nil)
 
@@ -75,10 +77,6 @@
 (defun fuse--debug-log (msg)
   (with-current-buffer (get-buffer-create "fuse-debug-log")
 	(insert msg)))
-
-
-
-
 
 (defun fuse--log-issue-detected (data)
   (fuse--log (concat
