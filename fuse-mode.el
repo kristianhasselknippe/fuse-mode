@@ -208,7 +208,6 @@
 										  :Payload req-obj-json))
 		   (the-message (message-to-string message-to-send)))
 	  (fuse--debug-log (concat the-message "\n"))
-	  ;(fuse--debug-log "about to send string\n")
 	  (fuse--process-send-string the-message))))
 
 
