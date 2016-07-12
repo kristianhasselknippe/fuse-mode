@@ -44,6 +44,8 @@
 		  `((setq fuse--structs (append fuse--structs (list (quote ,(intern (format "%s-p" name)))))))))
 
 
+(defvar fuse--buffer)
+(defvar fuse--daemon-proc)
 (setq fuse--buffer "")
 (setq fuse--daemon-proc nil)
 
@@ -75,18 +77,12 @@
   (with-current-buffer (get-buffer-create "fuse-debug-log")
 	(insert msg)))
 
-
-
-
-
 (defun fuse--log-issue-detected (data)
   (fuse--log (concat
 			  "ErrorCode: " (issue-detected-data-ErrorCode data)
 			  "\nPath: " (issue-detected-data-Path data)
 			  "\nLine: " (number-to-string (cdra 'Line (issue-detected-data-StartPosition data))))))
 
-
-(defvar fuse--current-completion-callback nil)
 
 
 
@@ -168,6 +164,7 @@
 
 	(set-process-filter fuse--daemon-proc 'fuse--filter)
 	(set-process-sentinel fuse--daemon-proc (lambda (proc msg) (fuse--debug-log msg) ))
+	(setq fuse--buffer "")
 	(fuse--request-services)))
 
 (defun fuse--process-send-string (msg)
@@ -259,7 +256,7 @@
 		(insert (fuse--get-necessary-completion selected-value))))))
 
 
-(defun fuse--complete-popup ()
+(defun fuse-auto-complete ()
   (interactive)
   (fuse--request-code-completion))
 
