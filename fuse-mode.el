@@ -85,8 +85,6 @@
 			  "\nLine: " (number-to-string (cdra 'Line (issue-detected-data-StartPosition data))))))
 
 
-(defvar fuse--current-completion-callback nil)
-
 
 
 (defun fuse--filter (proc msg)
@@ -167,6 +165,7 @@
 
 	(set-process-filter fuse--daemon-proc 'fuse--filter)
 	(set-process-sentinel fuse--daemon-proc (lambda (proc msg) (fuse--debug-log msg) ))
+	(setq fuse--buffer "")
 	(fuse--request-services)))
 
 (defun fuse--process-send-string (msg)
@@ -259,7 +258,7 @@
 		(insert (fuse--get-necessary-completion selected-value))))))
 
 
-(defun fuse--complete-popup ()
+(defun fuse-auto-complete ()
   (interactive)
   (fuse--request-code-completion))
 
