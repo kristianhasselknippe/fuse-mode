@@ -4,6 +4,7 @@
 (require 's)
 (require 'json)
 (require 'edebug)
+(require 'ov)
 
 (defun cdra (key alist)
   (cdr (assoc key alist)))
@@ -44,7 +45,7 @@
 		  `((setq fuse--structs (append fuse--structs (list (quote ,(intern (format "%s-p" name)))))))))
 
 
-(defvar fuse--buffer)
+(defvar fuse-n-buffer)
 (defvar fuse--daemon-proc)
 (setq fuse--buffer "")
 (setq fuse--daemon-proc nil)
@@ -74,16 +75,56 @@
 	(insert msg)))
 
 (defun fuse--debug-log (msg)
-  (with-current-buffer (get-buffer-create "fuse-debug-log")
-	(insert msg)))
+  (wppith-current-buffer (get-buffer-create "fuse-debug-log")
+						 (insert msg)))
 
+(defun pos-at-line-col (pos)
+  (save-excursion
+	(let ((l (1- (cdra 'Line pos)))
+		  (c (cdra 'Character pos)))
+	  (goto-char (point-min))
+	  (forward-line l)
+	  (move-to-column c)
+	  (point))))
+
+(defun pos-at-end-of-line (line)
+  (save-excursion
+	(goto-char (point-min))
+	(forward-line (- line 1))
+	(line-end-position)))
+
+(defun pos-at-start-of-line (line)
+  (save-excursion
+	(goto-char (point-min))
+	(forward-line (- line 1))
+	(message (format "LAP: %d" (line-number-at-pos (point))))
+	(back-to-indentation)
+	(point)))
+
+;BuildId IssueType Path StartPosition EndPosition ErrorCode Message)
 (defun fuse--log-issue-detected (data)
-  (fuse--log (concat
-			  "ErrorCode: " (issue-detected-data-ErrorCode data)
-			  "\nPath: " (issue-detected-data-Path data)
-			  "\nLine: " (number-to-string (cdra 'Line (issue-detected-data-StartPosition data))))))
-
-
+  (let ((error-code (issue-detected-data-ErrorCode data))
+		(path (issue-detected-data-Path data))
+		(line (number-to-string (cdra 'Line (issue-detected-data-StartPosition data))))
+		(start-pos (issue-detected-data-StartPosition data))
+		(end-pos (issue-detected-data-EndPosition data)))
+	(fuse--log (concat
+				"ErrorCode: " error-code
+				"\nPath: " path
+				"\nLine: " line))
+	(when (equal (downcase (file-name-base (buffer-file-name)))
+				 (downcase (file-name-base path)))
+	  (unless (equal start-pos 'nil)
+		(if (equal end-pos 'nil)
+			(progn
+			  (let ((sp (pos-at-start-of-line (cdra 'Line start-pos)))
+					(ep (pos-at-end-of-line (cdra 'Line start-pos))))
+				(message "going to start and end")
+				(message (format ":::::: %d %d" (cdra 'Line start-pos) (cdra 'Line start-pos)))
+				(let ((overlay (ov-make sp ep)))
+				  (ov-set overlay 'face '(:foreground "red")))))
+										;do something for this case
+		  )))))
 
 
 (defun fuse--filter (proc msg)
