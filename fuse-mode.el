@@ -50,7 +50,9 @@
 (setq fuse--buffer "")
 (setq fuse--daemon-proc nil)
 
-(defstruct-and-to-obj event Name SubscriptionId Data)
+(defstruct-and-to-obj event Name Data)
+(defstruct-and-to-obj selection-changed-data Path Text CaretPosition)
+
 (defstruct-and-to-obj issue-detected-data BuildId IssueType Path StartPosition EndPosition ErrorCode Message)
 (defstruct-and-to-obj subscribe-request-args Filter Replay Id)
 (defstruct-and-to-obj caret-position Line Character)
@@ -75,7 +77,7 @@
 	(insert msg)))
 
 (defun fuse--debug-log (msg)
-  (wppith-current-buffer (get-buffer-create "fuse-debug-log")
+  (with-current-buffer (get-buffer-create "fuse-debug-log")
 						 (insert msg)))
 
 (defun pos-at-line-col (pos)
@@ -103,6 +105,7 @@
 
 ;BuildId IssueType Path StartPosition EndPosition ErrorCode Message)
 (defun fuse--log-issue-detected (data)
+  (fuse--debug-log "issue detected")
   (let ((error-code (issue-detected-data-ErrorCode data))
 		(path (issue-detected-data-Path data))
 		(line (number-to-string (cdra 'Line (issue-detected-data-StartPosition data))))
@@ -177,9 +180,9 @@
 				  ((string= (message-Type message) "Event")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
 						  (event (make-event :Name (cdra 'Name decoded-payload)
-											 :SubscriptionId (cdra 'SubscriptionId decoded-payload)
+											 ;:SubscriptionId (cdra 'SubscriptionId decoded-payload)
 											 :Data (cdra 'Data decoded-payload)))
-						  (decoded-data (cdr (assoc 'Data decoded-payload)))
+						  (decoded-data (cdr (assoc 'Data decpoded-payload)))
 						  (data (make-issue-detected-data :BuildId (cdra 'BuildId decoded-data)
 														  :IssueType (cdra 'IssueType decoded-data)
 														  :Path (cdra 'Path decoded-data)
@@ -204,9 +207,9 @@
 											 "/usr/local/bin/fuse" "daemon-client" "fuse-mode")))
 
 	(set-process-filter fuse--daemon-proc 'fuse--filter)
-	(set-process-sentinel fuse--daemon-proc (lambda (proc msg) (fuse--debug-log msg) ))
+	(set-process-sentinel fuse--daemon-proc (lambda (proc msg) (fuse--debug-log msg) )))
 	(setq fuse--buffer "")
-	(fuse--request-services)))
+	(fuse--request-services))
 
 (defun fuse--process-send-string (msg)
   (when (equal fuse--was-initiated 'nil)
@@ -215,6 +218,7 @@
   (process-send-string fuse--daemon-proc msg))
 
 (defun fuse--request-services ()
+  (fuse--debug-log "requesting services")
   (let* ((request (make-request :Name "Subscribe" :Id 0
 								:Arguments (make-subscribe-request-args
 											:Filter "Fuse.BuildIssueDetected" :Replay t :Id 1)))
@@ -226,16 +230,21 @@
 	  (fuse--debug-log msg)
 	  (fuse--process-send-string msg))))
 
+(defun fuse--get-buffer-path ()
+  (if (equal system-type 'windows-nt)
+	  (s-replace "/" "\\" (buffer-file-name))
+	(buffer-file-name)))
+
+(defun fuse--get-buffer-text ()
+  (buffer-substring-no-properties (point-min) (point-max)))
 
 (defun fuse--request-code-completion ()
   (let* ((request (make-request :Name "Fuse.GetCodeSuggestions"
 								:Id 2
 								:Arguments (make-code-completion-request-args
 											:SyntaxType (car (last (s-split "\\." (buffer-file-name))))
-											:Path (if (equal system-type 'windows-nt)
-													  (s-replace "/" "\\" (buffer-file-name))
-													(buffer-file-name))
-											:Text (buffer-substring-no-properties (point-min) (point-max))
+											:Path (fuse--get-buffer-path)
+											:Text (fuse--get-buffer-text)
 											:CaretPosition (make-caret-position
 															:Line (count-lines 1 (point))
 															:Character (+ (line-offset) 1))))))
@@ -246,6 +255,33 @@
 										  :Payload req-obj-json))
 		   (the-message (message-to-string message-to-send)))
 	  (fuse--debug-log (concat the-message "\n"))
+	  (fuse--process-send-string the-message))))
+
+
+;{
+;	"Name": "Fuse.Preview.SelectionChanged",
+;    "Data":
+;    {
+;    	"Path": "C:\\FuseProjects\\MainView.ux", // Path to the file where selection was changed
+;        "Text": "<App>\n\t<Button />\n</App>", // Full source of document
+;        "CaretPosition": { "Line": 2, "Character": 9 } // 1-indexed text position within Text where selection was changed
+;    }
+;}
+(defun fuse--selection-changed ()
+  (interactive)
+  (let ((event (make-event :Name "Fuse.Preview.SelectionChanged"
+						   :Data (make-selection-changed-data :Path (fuse--get-buffer-path)
+															  :Text (fuse--get-buffer-text)
+															  :CaretPosition (make-caret-position
+																			  :Line (count-lines 1 (point))
+																			  :Character (+ (line-offset) 1))))))
+	(let* ((req-obj (fuse--serializable event))
+		   (req-obj-json (json-encode req-obj))
+		   (message-to-send (make-message :Type "Event"
+										  :Length (length req-obj-json)
+										  :Payload req-obj-json))
+		   (the-message (message-to-string message-to-send)))
+	  (fuse--debug-log the-message)
 	  (fuse--process-send-string the-message))))
 
 
@@ -326,6 +362,7 @@ module.exports = {
 
 
 
+
 ;;;###autoload
 (define-minor-mode fuse-mode
   "The Fuse minor mode."
@@ -334,6 +371,8 @@ module.exports = {
 
 ;;;###autoload
 (add-hook 'fuse-mode-hook 'fuse--mode-init)
+
+(define-key fuse-mode-map (kbd "C-c c") 'fuse-auto-complete)
 
 (provide 'fuse-mode)
 
