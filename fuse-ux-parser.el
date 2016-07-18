@@ -1,3 +1,4 @@
+(require 's)
 (defvar ux-buffer "")
 (defvar ux-pos 0)
 
@@ -16,6 +17,11 @@
 
 (defun fuse-parse-char (c &optional offset)
   (if (eq c (fuse-aref ux-buffer (+ ux-pos (if offset offset 0))))
+	  (fuse-consume)
+	'nil))
+
+(defun fuse-parse-any-char (char-list)
+  (if (member (fuse-peek) char-lsit)
 	  (fuse-consume)
 	'nil))
 
