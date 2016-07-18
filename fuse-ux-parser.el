@@ -42,6 +42,10 @@
 (defun fuse-parse-whitespace ()
   (fuse-parse-any-char '(?\s ?\t)))
 
+(defun fuse-parse-many-whitespace (ast)
+  (while (fuse-parse-whitespace))
+  't)
+
 (defun fuse-parse-identifier (ast)
   (let ((beginning-pos ux-pos))
 	(while (fuse-parse-any-char ux-identifier-chars-list))
@@ -49,9 +53,15 @@
 		(substring ux-buffer beginning-pos ux-pos)
 	  'nil)))
 
-(defun fuse-parse-element (ast)
-  (fuse-parse-string "<")
-  (fuse-parse-string )
+(defun fuse-parse-start-tag (ast)
+  (if (fuse-parse-string "<")
+	  (let ((element (fuse-parse-identifier ast)))
+		(if (and (fuse-parse-many-whitespace ast)
+				 (fuse-parse-string ">"))
+			element
+		  'nil))
+	'nil))
+
 
 (defun fuse-parse-root (ast)
   )
@@ -67,15 +77,6 @@
 (defun fuse-print-ast (ast)
   (princ ast))
 
-(defun fuse-test-string ()
-  (fuse-prepare-test-ux "<App>")
-  (fuse-parse-string "<App>"))
-
-(defun fuse-test-element ()
-  (fuse-prepare-test-ux "<App>")
-  (let ((ret (fuse-parse-element '())))
-	(fuse-print-ast ret)))
-
-(defun fuse-test-ux-1 ()
-  (fuse-prepare-test-ux "<App><Panel></Panel></App>")
-  (fuse-parse-root '()))
+(defun fuse-reset-test (ux)
+  (setq ux-pos 0)
+  (setq ux-buffer ux))
