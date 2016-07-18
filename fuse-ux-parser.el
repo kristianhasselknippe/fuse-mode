@@ -62,6 +62,25 @@
 		  'nil))
 	'nil))
 
+(defun fuse-parse-string-literal (ast)
+  (if (fuse-parse-string "\"")
+	  (let ((ret (fuse-parse-identifier))) ;this should parse more chars
+		(if (fuse-parse-string "\"")
+			ret
+		  'nil))
+	'nil))
+
+
+(defun fuse-parse-attribute (ast)
+  (let ((identifier (fuse-parse-identifier)))
+	(if (and identifier
+			 (fuse-parse-string "="))
+		(let ((value (fuse-parse-string-literal)))
+		  (if value
+			  value
+			'nil))
+	  'nil)))
+
 
 (defun fuse-parse-root (ast)
   )
