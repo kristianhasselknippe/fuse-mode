@@ -2,8 +2,10 @@
 (defvar ux-buffer "")
 (defvar ux-pos 0)
 
-(defvar ux-identifier-chars "abcdefghijklmnopqrstuvwxyz0123456789_")
-(defvar ux-identifier-chars-list (mapcar (lambda (x) x) ux-identifier-chars))
+(defvar ux-identifier-chars)
+(defvar ux-identifier-chars-list)
+(setq ux-identifier-chars "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
+(setq ux-identifier-chars-list (mapcar (lambda (x) x) "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"))
 
 (defun fuse-aref (buf pos)
   (if (<= (length buf) pos)
@@ -41,7 +43,11 @@
   (fuse-parse-any-char '(?\s ?\t)))
 
 (defun fuse-parse-identifier (ast)
-)
+  (let ((beginning-pos ux-pos))
+	(while (fuse-parse-any-char ux-identifier-chars-list))
+	(if (> ux-pos beginning-pos)
+		(substring ux-buffer beginning-pos ux-pos)
+	  'nil)))
 
 (defun fuse-parse-element (ast)
   (fuse-parse-string "<")
