@@ -1,19 +1,22 @@
 (defvar ux-buffer "")
 (defvar ux-pos 0)
 
-(defun fuse-consume (c)
-  (setf ux-pos (+ ux-pos c)))
+(defun fuse-consume (&optional c)
+  (setf ux-pos (+ ux-pos (if c c 1))))
 
-(defun fuse-consume ()
-  (fuse-consume 1))
-
-(defun fuse-parse-char (c)
-  (if (eq c (aref ux-buffer ux-pos))
+(defun fuse-parse-char (c &optional offset)
+  (if (eq c (aref ux-buffer (+ ux-pos (if offset offset 0))))
 	  (fuse-consume)
 	'nil))
 
 (defun fuse-parse-string (s)
-  (while (fuse-parse-char ()
+  (let ((offset 0))
+	(while (and (< offset (length s))
+			(fuse-parse-char (aref s offset) 0))
+	  (setq offset (1+ offset)))
+	(if (equal offset (length s))
+		s
+	  'nil)))
 
 (defun fuse-parse-element (ast)
   (fuse-parse-string "<"))
