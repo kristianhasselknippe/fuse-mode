@@ -45,7 +45,7 @@
 		  `((setq fuse--structs (append fuse--structs (list (quote ,(intern (format "%s-p" name)))))))))
 
 
-(defvar fuse-n-buffer)
+(defvar fuse--buffer)
 (defvar fuse--daemon-proc)
 (setq fuse--buffer "")
 (setq fuse--daemon-proc nil)
