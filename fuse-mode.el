@@ -182,7 +182,7 @@
 						  (event (make-event :Name (cdra 'Name decoded-payload)
 											 ;:SubscriptionId (cdra 'SubscriptionId decoded-payload)
 											 :Data (cdra 'Data decoded-payload)))
-						  (decoded-data (cdr (assoc 'Data decpoded-payload)))
+						  (decoded-data (cdr (assoc 'Data decoded-payload)))
 						  (data (make-issue-detected-data :BuildId (cdra 'BuildId decoded-data)
 														  :IssueType (cdra 'IssueType decoded-data)
 														  :Path (cdra 'Path decoded-data)
@@ -207,9 +207,9 @@
 											 "/usr/local/bin/fuse" "daemon-client" "fuse-mode")))
 
 	(set-process-filter fuse--daemon-proc 'fuse--filter)
-	(set-process-sentinel fuse--daemon-proc (lambda (proc msg) (fuse--debug-log msg) )))
+	(set-process-sentinel fuse--daemon-proc (lambda (proc msg) (fuse--debug-log msg) ))
 	(setq fuse--buffer "")
-	(fuse--request-services))
+	(fuse--request-services)))
 
 (defun fuse--process-send-string (msg)
   (when (equal fuse--was-initiated 'nil)
