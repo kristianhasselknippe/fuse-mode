@@ -1,4 +1,15 @@
 (require 's)
+(require 'cl-lib)
+
+(cl-defstruct (attrib
+			   (:constructor new-attrib (name value)))
+  name value)
+
+(cl-defstruct (element
+			   (:constructor new-element (name attribs content)))
+  name attribs content)
+
+
 (defvar ux-buffer "")
 (defvar ux-pos 0)
 
@@ -25,6 +36,11 @@
 	  (fuse-consume)
 	'nil))
 
+(defun fuse-parse-while (predicate)
+  (let ((beginning-pos ux-pos))
+	(while (funcall predicate))
+	(substring ux-buffer beginning-pos ux-pos)))
+
 (defun fuse-parse-any-char (char-list)
   (if (member (fuse-peek) char-list)
 	  (fuse-consume)
@@ -47,7 +63,7 @@
 (defun fuse-parse-whitespace ()
   (fuse-parse-any-char '(?\s ?\t)))
 
-(defun fuse-parse-many-whitespace (ast)
+(defun fuse-parse-many-whitespace ()
   (while (fuse-parse-whitespace))
   't)
 
@@ -58,33 +74,57 @@
 		(substring ux-buffer beginning-pos ux-pos)
 	  'nil)))
 
-(defun fuse-parse-start-tag (ast)
-  (if (fuse-parse-string "<")
-	  (let ((element (fuse-parse-identifier ast)))
-		(if (and (fuse-parse-many-whitespace ast)
-				 (fuse-parse-string ">"))
-			element
-		  'nil))
-	'nil))
-
 (defun fuse-parse-string-literal (ast)
   (if (fuse-parse-string "\"")
-	  (let ((ret (fuse-parse-identifier))) ;this should parse more chars
+	  (let ((ret (fuse-parse-while (lambda () (fuse-parse-char-except '(?\"))))))
 		(if (fuse-parse-string "\"")
 			ret
 		  'nil))
 	'nil))
 
-
 (defun fuse-parse-attribute (ast)
-  (let ((identifier (fuse-parse-identifier)))
+  (let ((identifier (fuse-parse-identifier ast)))
 	(if (and identifier
 			 (fuse-parse-string "="))
-		(let ((value (fuse-parse-string-literal)))
+		(let ((value (fuse-parse-string-literal ast)))
 		  (if value
-			  value
+			  `(,identifier . ,value)
 			'nil))
 	  'nil)))
+
+(defun fuse-parse-0-or-more (ast parser)
+  (let ((ret '())
+		(call-res))
+	(while (setq call-res (funcall parser ast))
+	  (setq ret (cons call-res ret)))
+	(print (reverse ret))
+	(reverse ret)))
+
+(defun fuse-parse-start-tag (ast)
+  (let (element)
+	(if (and (fuse-parse-string "<")
+			 (setq element (fuse-parse-identifier ast))
+			 (fuse-parse-many-whitespace)
+			 (fuse-parse-0-or-more ast (lambda (a)
+									 (fuse-parse-many-whitespace)
+									 (fuse-parse-attribute a)))
+			 (fuse-parse-string ">"))
+		element
+	  'nil)))
+
+(defun fuse-parse-end-tag (ast start-tag-name)
+  (if (and (fuse-parse-string "</")
+		   (fuse-parse-string start-tag-name)
+		   (fuse-parse-string ">"))
+	  start-tag-name
+	'nil))
+
+(defun fuse-pare-element (ast)
+  (let (tag-name
+		attributes-list
+		content)
+	(if (and (fuse-parse-start-tag)
+			 ()))))
 
 
 (defun fuse-parse-root (ast)
