@@ -30,6 +30,11 @@
 	  (fuse-consume)
 	'nil))
 
+(defun fuse-parse-char-except (exception-list &optional offset)
+  (if (not (member (fuse-peek) exception-list))
+	  (fuse-consume)
+	'nil))
+
 (defun fuse-parse-string (s)
   (let ((offset 0))
 	(while (and (< offset (length s))
