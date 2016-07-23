@@ -69,7 +69,7 @@
 
 (defun message-to-string (message)
   (unless (message-p message) (error "message-to-string only handles message types"))
-  (format "%s\n%d\n%s" (message-Type message) (message-Length message) (message-Payload message)))
+  (format "\n%s\n%d\n%s\n" (message-Type message) (message-Length message) (message-Payload message)))
 
 
 (defun fuse--log (msg)
@@ -215,7 +215,10 @@
   (when (equal fuse--was-initiated 'nil)
 	(fuse--mode-init)
 	(setq fuse--was-initiated 't))
-  (process-send-string fuse--daemon-proc msg))
+  (fuse--debug-log "we are about to send msg")
+  (fuse--debug-log msg)
+  (process-send-string fuse--daemon-proc msg)
+  (fuse--debug-log "string was sent"))
 
 (defun fuse--request-services ()
   (fuse--debug-log "requesting services")
@@ -254,7 +257,6 @@
 										  :Length  (length req-obj-json)
 										  :Payload req-obj-json))
 		   (the-message (message-to-string message-to-send)))
-	  (fuse--debug-log (concat the-message "\n"))
 	  (fuse--process-send-string the-message))))
 
 
@@ -273,7 +275,7 @@
 						   :Data (make-selection-changed-data :Path (fuse--get-buffer-path)
 															  :Text (fuse--get-buffer-text)
 															  :CaretPosition (make-caret-position
-																			  :Line (count-lines 1 (point))
+																			  :Line  (count-lines 1 (point))
 																			  :Character (+ (line-offset) 1))))))
 	(let* ((req-obj (fuse--serializable event))
 		   (req-obj-json (json-encode req-obj))
@@ -281,7 +283,7 @@
 										  :Length (length req-obj-json)
 										  :Payload req-obj-json))
 		   (the-message (message-to-string message-to-send)))
-	  (fuse--debug-log the-message)
+	  ;(fuse--debug-log the-message)
 	  (fuse--process-send-string the-message))))
 
 
