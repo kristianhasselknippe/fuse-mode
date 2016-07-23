@@ -363,10 +363,24 @@ module.exports = {
   :lighter "fuse"
   :keymap (make-sparse-keymap))
 
+(defun fuse--next-line-and-selection-change ()
+  (interactive)
+  (next-line)
+  (fuse--selection-changed))
+
+(defun fuse--prev-line-and-selection-changed ()
+  (interactive)
+  (previous-line)
+  (fuse--selection-changed))
+
 ;;;###autoload
 (add-hook 'fuse-mode-hook 'fuse--mode-init)
 
 (define-key fuse-mode-map (kbd "C-c c") 'fuse-auto-complete)
+
+(define-key fuse-mode-map (kbd "C-n") 'fuse--next-line-and-selection-change)
+
+(define-key fuse-mode-map (kbd "C-p") 'fuse--prev-line-and-selection-changed)
 
 (provide 'fuse-mode)
 
