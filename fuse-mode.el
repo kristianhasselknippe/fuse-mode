@@ -69,7 +69,7 @@
 
 (defun message-to-string (message)
   (unless (message-p message) (error "message-to-string only handles message types"))
-  (format "\n%s\n%d\n%s\n" (message-Type message) (message-Length message) (message-Payload message)))
+  (format "%s\n%d\n%s\n0\n" (message-Type message) (message-Length message) (message-Payload message)))
 
 
 (defun fuse--log (msg)
@@ -131,6 +131,9 @@
 
 
 (defun fuse--filter (proc msg)
+  (when (s-contains? "Failed to parse message length." msg)
+	(fuse--debug-log "Server: failed to parse mssage length.")
+	(edebug))
   (fuse--debug-log msg)
   (setf fuse--buffer (concat fuse--buffer msg))
   (let ((message-split (s-split-up-to "\n" fuse--buffer 2)))
@@ -215,10 +218,8 @@
   (when (equal fuse--was-initiated 'nil)
 	(fuse--mode-init)
 	(setq fuse--was-initiated 't))
-  (fuse--debug-log "we are about to send msg")
   (fuse--debug-log msg)
-  (process-send-string fuse--daemon-proc msg)
-  (fuse--debug-log "string was sent"))
+  (process-send-string fuse--daemon-proc msg))
 
 (defun fuse--request-services ()
   (fuse--debug-log "requesting services")
@@ -227,7 +228,7 @@
 											:Filter "Fuse.BuildIssueDetected" :Replay t :Id 1)))
 		 (payload (json-encode (request-to-obj request)))
 		 (message (make-message :Type "Request"
-								:Length (length payload)
+								:Length (string-bytes payload)
 								:Payload payload)))
 	(let ((msg (message-to-string message)))
 	  (fuse--debug-log msg)
@@ -254,21 +255,12 @@
 	(let* ((req-obj (fuse--serializable request))
 		   (req-obj-json (json-encode req-obj))
 		   (message-to-send (make-message :Type "Request"
-										  :Length  (length req-obj-json)
+										  :Length  (string-bytes req-obj-json)
 										  :Payload req-obj-json))
 		   (the-message (message-to-string message-to-send)))
 	  (fuse--process-send-string the-message))))
 
 
-;{
-;	"Name": "Fuse.Preview.SelectionChanged",
-;    "Data":
-;    {
-;    	"Path": "C:\\FuseProjects\\MainView.ux", // Path to the file where selection was changed
-;        "Text": "<App>\n\t<Button />\n</App>", // Full source of document
-;        "CaretPosition": { "Line": 2, "Character": 9 } // 1-indexed text position within Text where selection was changed
-;    }
-;}
 (defun fuse--selection-changed ()
   (interactive)
   (let ((event (make-event :Name "Fuse.Preview.SelectionChanged"
@@ -280,7 +272,7 @@
 	(let* ((req-obj (fuse--serializable event))
 		   (req-obj-json (json-encode req-obj))
 		   (message-to-send (make-message :Type "Event"
-										  :Length (length req-obj-json)
+										  :Length (string-bytes req-obj-json)
 										  :Payload req-obj-json))
 		   (the-message (message-to-string message-to-send)))
 	  ;(fuse--debug-log the-message)
