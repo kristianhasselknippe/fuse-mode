@@ -74,7 +74,7 @@
 	  'nil)))
 
 (def-parser fuse-parse-whitespace ()
-  (fuse-parse-any-char '(?\s ?\t)))
+  (fuse-parse-any-char '(?\s ?\t ?\n)))
 
 (def-parser fuse-parse-many-whitespace ()
   (while (fuse-parse-whitespace))
@@ -150,6 +150,7 @@
 
 (def-parser fuse-parse-element ()
   (let ((start-tag (fuse-parse-start-tag)))
+	(fuse-parse-many-whitespace)
 	(let ((element-name (car start-tag))
 		  (attributes-list (cdr start-tag))
 		  (end-tag (fuse-parse-end-tag))
@@ -157,6 +158,7 @@
 	  (if (not end-tag)
 		  (progn
 			(setq content (fuse-parse-element))
+			(fuse-parse-many-whitespace)
 			(setq end-tag (fuse-parse-end-tag))
 			(new-element element-name (cdr start-tag) content))
 		(progn
@@ -164,21 +166,32 @@
 			  (new-element element-name (cdr start-tag) content)
 			'nil))))))
 
+(defun fuse--get-buffer-contents ()
+  (buffer-substring-no-properties (point-min) (point-max)))
 
-(defun fuse-parse-root ()
-  )
 
-(defun fuse-parse-ux (ux)
-  (setf ux-buffer ux)
-  (fuse-parse-root))
+(defun fuse-attrib-to-string (a &optional depth)
+  (if a
+	  (let ((ret (make-string depth ?\t)))
+		(-each a (lambda (attr)
+				   (princ attr)
+				   (setq ret (concat ret "AName: " (attrib-name attr) " AVal: " (attrib-value attr) ", "))))
+		ret)
+	""))
 
-(defun fuse-prepare-test-ux (ux)
-  (setf ux-buffer ux)
-  (setf ux-pos 0))
+(defun fuse-element-to-string (e &optional depth)
+  (let ((str ""))
+	(unless depth (setq depth 0))
+	(unless str (setq str ""))
+	(setq str (concat str (make-string depth ?\t) "EName: " (element-name e) " \n"))
+	(when (element-attribs e) (setq str (concat str (fuse-attrib-to-string (element-attribs e) depth) "\n")))
+	(when (element-content e) (setq str (concat str (fuse-element-to-string (element-content e) (1+ depth)))))
+	str))
 
-(defun fuse-print-ast ()
-  (princ ast))
 
-(defun fuse-reset-test (ux)
+(defun fuse-parse-current-ux-buffer ()
+  (interactive)
   (setq ux-pos 0)
-  (setq ux-buffer ux))
+  (setq ux-buffer (fuse--get-buffer-contents))
+  (let ((ret (fuse-parse-element)))
+	(message (fuse-element-to-string ret))))
