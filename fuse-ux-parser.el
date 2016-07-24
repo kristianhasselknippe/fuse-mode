@@ -150,6 +150,7 @@
 
 
 (def-parser fuse-parse-element ()
+  (fuse-parse-many-whitespace)
   (let ((start-tag (fuse-parse-start-tag)))
 	(fuse-parse-many-whitespace)
 	(let ((element-name (car start-tag))
@@ -161,6 +162,7 @@
 			(setq content (fuse-parse-0-or-more 'fuse-parse-element))
 			(fuse-parse-many-whitespace)
 			(setq end-tag (fuse-parse-end-tag))
+			(fuse-parse-many-whitespace)
 			(new-element element-name (cdr start-tag) content))
 		(progn
 		  (if (equal end-tag element-name)
@@ -203,4 +205,4 @@
   (setq ux-pos 0)
   (setq ux-buffer (fuse--get-buffer-contents))
   (let ((ret (fuse-parse-element)))
-	(message (fuse-element-to-string ret))))
+	(princ ret)))
