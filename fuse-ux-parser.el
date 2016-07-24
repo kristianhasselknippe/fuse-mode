@@ -20,14 +20,16 @@
 		   (setq ux-pos last-pos)
 		   ret)))))
 
-
 (defvar ux-buffer "")
 (defvar ux-pos 0)
 
 (defvar ux-identifier-chars)
 (defvar ux-identifier-chars-list)
+(defvar ux-attribute-identifier-chars)
 (setq ux-identifier-chars "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
 (setq ux-identifier-chars-list (mapcar (lambda (x) x) "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"))
+
+(setq ux-attribute-identifier-chars (cons ?: ux-identifier-chars-list))
 
 (defun fuse-aref (buf pos)
   (if (<= (length buf) pos)
@@ -85,6 +87,13 @@
 		(substring ux-buffer beginning-pos ux-pos)
 	  'nil)))
 
+(def-parser fuse-parse-attribute-identifier ()
+  (let ((beginning-pos ux-pos))
+	(while (fuse-parse-any-char ux-attribute-identifier-chars))
+	(if (> ux-pos beginning-pos)
+		(substring ux-buffer beginning-pos ux-pos)
+	  'nil)))
+
 (def-parser fuse-parse-string-literal ()
   (if (fuse-parse-string "\"")
 	  (let ((ret (fuse-parse-while (lambda () (fuse-parse-char-except '(?\"))))))
@@ -94,7 +103,7 @@
 	'nil))
 
 (def-parser fuse-parse-attribute ()
-  (let ((identifier (fuse-parse-identifier)))
+  (let ((identifier (fuse-parse-attribute-identifier)))
 	(if (and identifier
 			 (fuse-parse-string "="))
 		(let ((value (fuse-parse-string-literal)))
