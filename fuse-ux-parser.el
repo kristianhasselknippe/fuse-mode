@@ -10,6 +10,10 @@
 			   (:constructor new-element (name attribs content)))
   name attribs content)
 
+(cl-defstruct (opening-tag
+			   (:constructor new-opening-tag (name attribs type)))
+  name attribs type)
+
 (defmacro def-parser (name args &rest body)
   `(defun ,name ,args
 	 (let ((last-pos ux-pos)
@@ -136,8 +140,13 @@
 								   (fuse-parse-many-whitespace)
 								   (fuse-parse-attribute))))
 					't)
-			 (fuse-parse-string ">"))
-		`(,element-name . ,attributes)
+			 (let r (if (fuse-parse-string "/>")
+						(new-opening-tag element-name attributes 'self-closing)
+					  (if  (fuse-parse-string ">")
+						  (new-opening-tag element-name attributes 'opening-tag)
+						'nil)
+					  'nil)))
+		r
 	  'nil)))
 
 (def-parser fuse-parse-end-tag ()
@@ -152,22 +161,25 @@
 (def-parser fuse-parse-element ()
   (fuse-parse-many-whitespace)
   (let ((start-tag (fuse-parse-start-tag)))
-	(fuse-parse-many-whitespace)
-	(let ((element-name (car start-tag))
-		  (attributes-list (cdr start-tag))
-		  (end-tag (fuse-parse-end-tag))
-		  (content))
-	  (if (not end-tag)
-		  (progn
-			(setq content (fuse-parse-0-or-more 'fuse-parse-element))
-			(fuse-parse-many-whitespace)
-			(setq end-tag (fuse-parse-end-tag))
-			(fuse-parse-many-whitespace)
-			(new-element element-name (cdr start-tag) content))
+	(if (not (equal (opening-tag-type start-tag) 'self-closing))
 		(progn
-		  (if (equal end-tag element-name)
-			  (new-element element-name (cdr start-tag) content)
-			'nil))))))
+		  (fuse-parse-many-whitespace)
+		  (let ((element-name (opening-tag-name start-tag))
+				(attributes-list (opening-tag-attribs start-tag))
+				(end-tag (fuse-parse-end-tag))
+				(content))
+			(if (not end-tag)
+				(progn
+				  (setq content (fuse-parse-0-or-more 'fuse-parse-element))
+				  (fuse-parse-many-whitespace)
+				  (setq end-tag (fuse-parse-end-tag))
+				  (fuse-parse-many-whitespace)
+				  (new-element element-name (opening-tag-name start-tag) content))
+			  (progn
+				(if (equal end-tag element-name)
+					(new-element element-name (opening-tag-attribs start-tag) content)
+				  'nil)))))
+	  (new-element (opening-tag-name start-tag) (opening-tag-attribs start-tag) 'self-closing))))
 
 (defun testittest ()
   (setq ux-pos 0)
