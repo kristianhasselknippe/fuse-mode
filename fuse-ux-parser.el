@@ -13,12 +13,12 @@
 (defmacro def-parser (name args &rest body)
   `(defun ,name ,args
 	 (let ((last-pos ux-pos)
-		   (ret (progn ,@body)))
-	   (if ret
-		   ret
+		   (to-be-returned (progn ,@body)))
+	   (if to-be-returned
+		   to-be-returned
 		 (progn
 		   (setq ux-pos last-pos)
-		   ret)))))
+		   to-be-returned)))))
 
 (defvar ux-buffer "")
 (defvar ux-pos 0)
@@ -113,12 +113,13 @@
 	  'nil)))
 
 (def-parser fuse-parse-0-or-more (parser)
-  (let ((ret '())
-		(call-res))
+  (let ((r)
+		(call-res 'nil))
 	(while (setq call-res (funcall parser))
-	  (setq ret (cons call-res ret)))
-    (reverse ret)
-	))
+	  (setq r (cons call-res r)))
+	  (if r
+		  (reverse r)
+		'empty)))
 
 (def-parser fuse-parse-or (p1 p2)
   (unless (apply p1)
@@ -157,7 +158,7 @@
 		  (content))
 	  (if (not end-tag)
 		  (progn
-			(setq content (fuse-parse-element))
+			(setq content (fuse-parse-0-or-more 'fuse-parse-element))
 			(fuse-parse-many-whitespace)
 			(setq end-tag (fuse-parse-end-tag))
 			(new-element element-name (cdr start-tag) content))
@@ -165,6 +166,11 @@
 		  (if (equal end-tag element-name)
 			  (new-element element-name (cdr start-tag) content)
 			'nil))))))
+
+(defun testittest ()
+  (setq ux-pos 0)
+  (fuse-parse-element))
+
 
 (defun fuse--get-buffer-contents ()
   (buffer-substring-no-properties (point-min) (point-max)))
@@ -185,7 +191,10 @@
 	(unless str (setq str ""))
 	(setq str (concat str (make-string depth ?\t) "EName: " (element-name e) " \n"))
 	(when (element-attribs e) (setq str (concat str (fuse-attrib-to-string (element-attribs e) depth) "\n")))
-	(when (element-content e) (setq str (concat str (fuse-element-to-string (element-content e) (1+ depth)))))
+	(when (element-content e)
+	  (-each (element-content e)
+		(lambda (elem)
+		  (setq str (concat str (fuse-element-to-string elem (1+ depth)))))))
 	str))
 
 
