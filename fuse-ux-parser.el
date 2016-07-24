@@ -29,7 +29,7 @@
 (setq ux-identifier-chars "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
 (setq ux-identifier-chars-list (mapcar (lambda (x) x) "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"))
 
-(setq ux-attribute-identifier-chars (cons ?: ux-identifier-chars-list))
+(setq ux-attribute-identifier-chars (cons ?. (cons ?: ux-identifier-chars-list)))
 
 (defun fuse-aref (buf pos)
   (if (<= (length buf) pos)
