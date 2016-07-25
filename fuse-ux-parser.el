@@ -10,9 +10,20 @@
 			   (:constructor new-element (name attribs content)))
   name attribs content)
 
-(cl-defstruct (opening-tag
-			   (:constructor new-opening-tag (name attribs type)))
+(cl-defstruct (start-tag
+			   (:constructor new-start-tag (name attribs type)))
   name attribs type)
+
+(defun new-self-closing-tag (name attribs)
+  (new-start-tag name attribs 'self-closing-tag))
+(defun self-closing-tag-p (start-tag)
+  (equal (aref start-tag 3) 'self-closing-tag))
+
+(defun new-opening-tag (name attribs)
+  (new-start-tag name attribs 'opening-tag))
+(defun opening-tag-p (opening-tag)
+  (equal (aref opening-tag 3) 'opening-tag))
+
 
 (defmacro def-parser (name args &rest body)
   `(defun ,name ,args
@@ -132,22 +143,22 @@
 (def-parser fuse-parse-start-tag ()
   (let (element-name
 		attributes)
-	(if (and (fuse-parse-string "<")
-			 (setq element-name (fuse-parse-identifier))
-			 (fuse-parse-many-whitespace)
-			 (progn (setq attributes (fuse-parse-0-or-more
-								 (lambda ()
-								   (fuse-parse-many-whitespace)
-								   (fuse-parse-attribute))))
-					't)
-			 (let r (if (fuse-parse-string "/>")
-						(new-opening-tag element-name attributes 'self-closing)
-					  (if  (fuse-parse-string ">")
-						  (new-opening-tag element-name attributes 'opening-tag)
-						'nil)
-					  'nil)))
-		r
-	  'nil)))
+	(let (r)
+	  (if (and (fuse-parse-string "<")
+			   (setq element-name (fuse-parse-identifier))
+			   (fuse-parse-many-whitespace)
+			   (progn
+				 (setq attributes (fuse-parse-0-or-more
+								   (lambda ()
+									 (fuse-parse-many-whitespace)
+									 (fuse-parse-attribute))))
+				 't)
+			   (setq r (cond
+						((fuse-parse-string "/>") (new-self-closing-tag element-name attributes))
+						((fuse-parse-string ">") (new-opening-tag element-name attributes))
+						('t 'nil))))
+		  r
+		'nil))))
 
 (def-parser fuse-parse-end-tag ()
   (let ((ret)))
@@ -161,25 +172,38 @@
 (def-parser fuse-parse-element ()
   (fuse-parse-many-whitespace)
   (let ((start-tag (fuse-parse-start-tag)))
-	(if (not (equal (opening-tag-type start-tag) 'self-closing))
-		(progn
-		  (fuse-parse-many-whitespace)
-		  (let ((element-name (opening-tag-name start-tag))
-				(attributes-list (opening-tag-attribs start-tag))
-				(end-tag (fuse-parse-end-tag))
-				(content))
-			(if (not end-tag)
-				(progn
-				  (setq content (fuse-parse-0-or-more 'fuse-parse-element))
-				  (fuse-parse-many-whitespace)
-				  (setq end-tag (fuse-parse-end-tag))
-				  (fuse-parse-many-whitespace)
-				  (new-element element-name (opening-tag-name start-tag) content))
-			  (progn
-				(if (equal end-tag element-name)
-					(new-element element-name (opening-tag-attribs start-tag) content)
-				  'nil)))))
-	  (new-element (opening-tag-name start-tag) (opening-tag-attribs start-tag) 'self-closing))))
+	(if (not (equal start-tag 'nil))
+		(if (opening-tag-p start-tag)
+			(progn
+			  (fuse-parse-many-whitespace)
+			  (let ((element-name (progn
+									(princ "bar")
+									(start-tag-name start-tag)))
+					(attributes-list (start-tag-attribs start-tag))
+					(end-tag (fuse-parse-end-tag))
+					(content))
+				(if (not end-tag)
+					(progn
+					  (setq content (fuse-parse-0-or-more 'fuse-parse-element))
+					  (fuse-parse-many-whitespace)
+					  (setq end-tag (fuse-parse-end-tag))
+					  (fuse-parse-many-whitespace)
+					  (new-element element-name (progn
+												  (princ "foo0")
+												  (start-tag-name start-tag)) content))
+				  (progn
+					(if (equal end-tag element-name)
+						(new-element element-name (start-tag-attribs start-tag) content)
+					  'nil)))))
+		  (new-element (progn
+						 (princ "foo1")
+						 (when (not (start-tag-p start-tag))
+						   (edebug))
+						 (start-tag-name start-tag)) (start-tag-attribs start-tag) 'self-closing))
+	  'nil)))
+
+(def-parser fuse-parse-element ()
+  ())
 
 (defun testittest ()
   (setq ux-pos 0)
