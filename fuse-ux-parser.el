@@ -172,38 +172,24 @@
 (def-parser fuse-parse-element ()
   (fuse-parse-many-whitespace)
   (let ((start-tag (fuse-parse-start-tag)))
-	(if (not (equal start-tag 'nil))
-		(if (opening-tag-p start-tag)
-			(progn
-			  (fuse-parse-many-whitespace)
-			  (let ((element-name (progn
-									(princ "bar")
-									(start-tag-name start-tag)))
-					(attributes-list (start-tag-attribs start-tag))
-					(end-tag (fuse-parse-end-tag))
-					(content))
-				(if (not end-tag)
-					(progn
-					  (setq content (fuse-parse-0-or-more 'fuse-parse-element))
-					  (fuse-parse-many-whitespace)
-					  (setq end-tag (fuse-parse-end-tag))
-					  (fuse-parse-many-whitespace)
-					  (new-element element-name (progn
-												  (princ "foo0")
-												  (start-tag-name start-tag)) content))
-				  (progn
-					(if (equal end-tag element-name)
-						(new-element element-name (start-tag-attribs start-tag) content)
-					  'nil)))))
-		  (new-element (progn
-						 (princ "foo1")
-						 (when (not (start-tag-p start-tag))
-						   (edebug))
-						 (start-tag-name start-tag)) (start-tag-attribs start-tag) 'self-closing))
-	  'nil)))
+	(cond
+	 ((equal start-tag 'nil) 'nil)
 
-(def-parser fuse-parse-element ()
-  ())
+	 ((self-closing-tag-p start-tag)
+	  (princ "self closing tag") (princ (start-tag-name start-tag))
+	  (new-element (start-tag-name start-tag) (start-tag-attribs start-tag) 'nil))
+
+	 ((opening-tag-p start-tag)
+	  (fuse-parse-many-whitespace)
+	  (let ((content (fuse-parse-0-or-more 'fuse-parse-element)))
+		(fuse-parse-many-whitespace)
+		(if (equal (start-tag-name start-tag) (fuse-parse-end-tag))
+			(progn
+			  (princ "normal tag") (princ (start-tag-name start-tag))
+			  (new-element (start-tag-name start-tag)
+						   (start-tag-attribs start-tag)
+						   content))
+		  'nil))))))
 
 (defun testittest ()
   (setq ux-pos 0)
