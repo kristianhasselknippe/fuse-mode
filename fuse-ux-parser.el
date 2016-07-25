@@ -216,10 +216,12 @@
 	(setq str (concat str (make-string depth ?\t) "EName: " (element-name e) " \n"))
 	(when (not (equal  (element-attribs e) 'empty))
 	  (setq str (concat str (fuse-attrib-to-string (element-attribs e) depth) "\n")))
-	(when (element-content e)
-	  (-each (element-content e)
-		(lambda (elem)
-		  (setq str (concat str (fuse-element-to-string elem (1+ depth)))))))
+	(let ((elem-cont (element-content e)))
+	  (when (and elem-cont
+				 (not (equal elem-cont 'empty)))
+		(-each elem-cont
+		  (lambda (elem)
+			(setq str (concat str (fuse-element-to-string elem (1+ depth))))))))
 	str))
 
 
