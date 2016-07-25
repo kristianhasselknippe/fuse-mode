@@ -1,0 +1,17 @@
+<App Theme="foo" Color="#f00" ux:Name="faro">
+	<string ux:Property="fla" />
+	<Panel ux:Class="MainView">
+		<StackPanel>
+			<Rectangle Color="#f00">
+			</Rectangle>
+			<Rectangle Color="#00f">
+			</Rectangle>
+			<Rectangle Color="#ff0">
+			</Rectangle>
+			<Rectangle Color="#f0f">
+			</Rectangle>
+		</StackPanel>
+	</Panel>
+	<Image File="Foo.png"></Image>
+	<Change foo.bar="100" Duration="1.0"></Change>
+</App>
