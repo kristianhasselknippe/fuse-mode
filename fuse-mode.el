@@ -378,9 +378,9 @@ module.exports = {
 
 (define-key fuse-mode-map (kbd "C-c c") 'fuse-auto-complete)
 
-(define-key fuse-mode-map (kbd "C-n") 'fuse--next-line-and-selection-change)
+;(define-key fuse-mode-map (kbd "C-n") 'fuse--next-line-and-selection-change)
 
-(define-key fuse-mode-map (kbd "C-p") 'fuse--prev-line-and-selection-changed)
+;(define-key fuse-mode-map (kbd "C-p") 'fuse--prev-line-and-selection-changed)
 
 (provide 'fuse-mode)
 
