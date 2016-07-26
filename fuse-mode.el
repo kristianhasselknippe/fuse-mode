@@ -352,16 +352,7 @@ module.exports = {
 	   ((string-match "\\.unoproj\\'" buffer-file-name)
 		(json-mode))))))
 
-(add-hook 'find-file-hook 'fuse--file-created)
 
-
-
-
-;;;###autoload
-(define-minor-mode fuse-mode
-  "The Fuse minor mode."
-  :lighter "fuse"
-  :keymap (make-sparse-keymap))
 
 (defun fuse--next-line-and-selection-change ()
   (interactive)
@@ -372,6 +363,34 @@ module.exports = {
   (interactive)
   (previous-line)
   (fuse--selection-changed))
+
+(defun fuse-set-text-prop (start end face)
+  (put-text-property start end 'font-lock-face face))
+
+
+(add-hook 'find-file-hook 'fuse--file-created)
+
+;;;###autoload
+(define-derived-mode fuse-mode fundamental-mode "Fuse major mode"
+  "Major mode for editing JavaScript code."
+  (set (make-local-variable 'max-lisp-eval-depth)
+       (max max-lisp-eval-depth 3000))
+  ;(set (make-local-variable 'indent-line-function) #'fuse-indent-line)
+  ;(set (make-local-variable 'indent-region-function) #'fuse-indent-region)
+  (set (make-local-variable 'syntax-propertize-function) nil)
+  (setq font-lock-defaults '(nil t))
+
+  ;(add-hook 'change-major-mode-hook #'js2-mode-exit nil t)
+  ;(setq next-error-function #'js2-next-error)
+
+  (run-hooks 'fuse-init-hook))
+
+
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.ux\\'" . fuse-mode))
+
+
 
 ;;;###autoload
 (add-hook 'fuse-mode-hook 'fuse--mode-init)
