@@ -364,8 +364,11 @@ module.exports = {
   (previous-line)
   (fuse--selection-changed))
 
-(defun fuse-set-text-prop (start end face)
+(defun fuse-put-text-prop (start end face)
   (put-text-property start end 'font-lock-face face))
+
+(defun fuse-clear-text-prop (start end)
+  (set-text-properties start end nil))
 
 
 (add-hook 'find-file-hook 'fuse--file-created)
