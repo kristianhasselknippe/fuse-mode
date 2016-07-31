@@ -6,6 +6,8 @@
 (require 'edebug)
 (require 'ov)
 
+(load-file "./fuse-ux-syntax-highlighting.el")
+
 (defun cdra (key alist)
   (cdr (assoc key alist)))
 
@@ -369,7 +371,6 @@ module.exports = {
 
 (defun fuse-clear-text-prop (start end)
   (set-text-properties start end nil))
-
 
 (add-hook 'find-file-hook 'fuse--file-created)
 
