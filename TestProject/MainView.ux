@@ -1,6 +1,9 @@
 <App>
-	<Panel  >
+	<Panel Alignment="TopRight" Color="Red">
 		<Text Value="foo2" Alignment="Center"/>
+		<Clicked>
+			<DebugAction Message="This is a log" />
+		</Clicked>
 	</Panel>
 
 </App>

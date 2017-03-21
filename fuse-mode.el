@@ -223,11 +223,11 @@
   (fuse--debug-log msg)
   (process-send-string fuse--daemon-proc msg))
 
-(defun fuse--request-services ()
-  (fuse--debug-log "requesting services")
-  (let* ((request (make-request :Name "Subscribe" :Id 0
+(defvar fuse--subscriber-id-counter 0)
+(defun fuse--request-service (service-name)
+  (let* ((request (make-request :Name "Subscribe" :Id (setq (1+ fuse--subscriber-id-counter))
 								:Arguments (make-subscribe-request-args
-											:Filter "Fuse.BuildIssueDetected" :Replay t :Id 1)))
+											:Filter service-name :Replay t :Id 1)))
 		 (payload (json-encode (request-to-obj request)))
 		 (message (make-message :Type "Request"
 								:Length (string-bytes payload)
@@ -235,6 +235,12 @@
 	(let ((msg (message-to-string message)))
 	  (fuse--debug-log msg)
 	  (fuse--process-send-string msg))))
+
+
+(defun fuse--request-services ()
+  (fuse--debug-log "requesting services")
+  (fuse--request-service "Fuse.BuildIssueDetected")
+  (fuse--request-service "Fuse.LogEvent"))
 
 (defun fuse--get-buffer-path ()
   (if (equal system-type 'windows-nt)
