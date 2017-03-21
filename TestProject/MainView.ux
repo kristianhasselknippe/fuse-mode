@@ -3,7 +3,7 @@
 		<Text Value="foo2" Alignment="Center"/>
 		<Clicked>
 			<DebugAction Message="This is a log" />
-		</Clicked>
+		</Clicked> 
 	</Panel>
 
 </App>

@@ -73,11 +73,6 @@
   (unless (message-p message) (error "message-to-string only handles message types"))
   (format "%s\n%d\n%s\n0\n" (message-Type message) (message-Length message) (message-Payload message)))
 
-
-(defun fuse--log (msg)
-  (with-current-buffer (get-buffer-create "fuse-log")
-	(insert msg)))
-
 (defun fuse--debug-log (msg)
   (with-current-buffer (get-buffer-create "fuse-debug-log")
 						 (insert msg)))
@@ -131,6 +126,23 @@
 										;do something for this case
 		  )))))
 
+(defun fuse--handle-issue-detected-event (decoded-data)  
+  (data (make-issue-detected-data :BuildId (cdra 'BuildId decoded-data)
+								  :IssueType (cdra 'IssueType decoded-data)
+								  :Path (cdra 'Path decoded-data)
+								  :StartPosition (cdra 'StartPosition decoded-data)
+								  :EndPosition (cdra 'EndPosition decoded-data)
+								  :ErrorCode (cdra 'ErrorCode decoded-data)
+								  :Message (cdra 'Message decoded-data)))
+  (fuse--log-issue-detected data))
+
+(defun fuse--log (msg)
+  (with-current-buffer (get-buffer-create "fuse-log")
+	(insert (concat msg "\n"))))
+
+(defun fuse--handle-log-event (decoded-data)
+  (fuse--log (cdra 'Message decoded-data)))
+
 
 (defun fuse--filter (proc msg)
   (when (s-contains? "Failed to parse message length." msg)
@@ -148,6 +160,7 @@
 						   :Payload (substring-no-properties (nth 2 message-split) 0 msg-len))))
 
 			(setf fuse--buffer (substring (nth 2 message-split) msg-len (length (nth 2 message-split))))
+			(fuse--debug-log (concat "We got a message" (message-Type message) "\n"))
 			(cond ((string= (message-Type message) "Response")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
 						  (response
@@ -185,19 +198,12 @@
 				  ((string= (message-Type message) "Event")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
 						  (event (make-event :Name (cdra 'Name decoded-payload)
-											 ;:SubscriptionId (cdra 'SubscriptionId decoded-payload)
 											 :Data (cdra 'Data decoded-payload)))
-						  (decoded-data (cdr (assoc 'Data decoded-payload)))
-						  (data (make-issue-detected-data :BuildId (cdra 'BuildId decoded-data)
-														  :IssueType (cdra 'IssueType decoded-data)
-														  :Path (cdra 'Path decoded-data)
-														  :StartPosition (cdra 'StartPosition decoded-data)
-														  :EndPosition (cdra 'EndPosition decoded-data)
-														  :ErrorCode (cdra 'ErrorCode decoded-data)
-														  :Message (cdra 'Message decoded-data))))
-					 (fuse--log-issue-detected data))))))))))
-
-
+						  (decoded-data (cdr (assoc 'Data decoded-payload))))
+					 (fuse--debug-log (concat "we got an event at least" (event-Name event) "\n"))
+					 (cond
+					  ((string= (event-Name event) "Fuse.LogEvent") (fuse--handle-log-event decoded-data))
+					  ((string= (event-Name event) "Fuse.BuildIssueDetected") (fuse--handle-issue-detected-event decoded-payload) decoded-data)))))))))))
 
 
 (defvar fuse--was-initiated 'nil)
@@ -225,7 +231,7 @@
 
 (defvar fuse--subscriber-id-counter 0)
 (defun fuse--request-service (service-name)
-  (let* ((request (make-request :Name "Subscribe" :Id (setq (1+ fuse--subscriber-id-counter))
+  (let* ((request (make-request :Name "Subscribe" :Id 0
 								:Arguments (make-subscribe-request-args
 											:Filter service-name :Replay t :Id 1)))
 		 (payload (json-encode (request-to-obj request)))
