@@ -78,7 +78,7 @@
 						 (insert msg)))
 
 (defun pos-at-line-col (pos)
-  (save-excursion
+  (savey-excursion
 	(let ((l (1- (cdra 'Line pos)))
 		  (c (cdra 'Character pos)))
 	  (goto-char (point-min))
@@ -100,6 +100,16 @@
 	(back-to-indentation)
 	(point)))
 
+(defun fuse--open-file-at-line (file line)
+  (message (format "we are opening %s at %s" file line))
+  (open-file file))
+
+(defun fuse--write-issue-detected-to-buffer (path line)
+  (with-current-buffer (get-buffer-create "fuse-errors")
+	(insert-text-button (format "%s -- line: %s\n" path line) 'action (lambda (x)
+																		(fuse--debug-log (format "foooooobar %s\n" path))
+																		(fuse--open-file-at-line path line)))))
+
 ;BuildId IssueType Path StartPosition EndPosition ErrorCode Message)
 (defun fuse--log-issue-detected (data)
   (fuse--debug-log "issue detected")
@@ -112,6 +122,7 @@
 				"ErrorCode: " error-code
 				"\nPath: " path
 				"\nLine: " line))
+	(fuse--write-issue-detected-to-buffer path line)
 	(when (equal (downcase (file-name-base (buffer-file-name)))
 				 (downcase (file-name-base path)))
 	  (unless (equal start-pos 'nil)
@@ -119,22 +130,24 @@
 			(progn
 			  (let ((sp (pos-at-start-of-line (cdra 'Line start-pos)))
 					(ep (pos-at-end-of-line (cdra 'Line start-pos))))
-				(message "going to start and end")
-				(message (format ":::::: %d %d" (cdra 'Line start-pos) (cdra 'Line start-pos)))
-				(let ((overlay (ov-make sp ep)))
-				  (ov-set overlay 'face '(:foreground "red")))))
+				(fuse--debug-log "going to start and end\n")
+				(fuse--debug-log (format ":::::: %d %d \n" (cdra 'Line start-pos) (cdra 'Line start-pos)))
+				;(let ((overlay (ov-make sp ep)))
+				;  (ov-set overlay 'face '(:foreground "red")))
+				))
 										;do something for this case
 		  )))))
 
-(defun fuse--handle-issue-detected-event (decoded-data)  
-  (data (make-issue-detected-data :BuildId (cdra 'BuildId decoded-data)
+(defun fuse--handle-issue-detected-event (decoded-data)
+  (fuse--debug-log "We are tryign to isue detect")
+  (let ((data (make-issue-detected-data :BuildId (cdra 'BuildId decoded-data)
 								  :IssueType (cdra 'IssueType decoded-data)
 								  :Path (cdra 'Path decoded-data)
 								  :StartPosition (cdra 'StartPosition decoded-data)
 								  :EndPosition (cdra 'EndPosition decoded-data)
 								  :ErrorCode (cdra 'ErrorCode decoded-data)
-								  :Message (cdra 'Message decoded-data)))
-  (fuse--log-issue-detected data))
+								  :Message (cdra 'Message decoded-data))))
+  (fuse--log-issue-detected data)))
 
 (defun fuse--log (msg)
   (with-current-buffer (get-buffer-create "fuse-log")
@@ -196,6 +209,7 @@
 				               ;; CODE COMPLETION ^^^^^^
 
 				  ((string= (message-Type message) "Event")
+				   ;(edebug)
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
 						  (event (make-event :Name (cdra 'Name decoded-payload)
 											 :Data (cdra 'Data decoded-payload)))
@@ -203,11 +217,12 @@
 					 (fuse--debug-log (concat "we got an event at least" (event-Name event) "\n"))
 					 (cond
 					  ((string= (event-Name event) "Fuse.LogEvent") (fuse--handle-log-event decoded-data))
-					  ((string= (event-Name event) "Fuse.BuildIssueDetected") (fuse--handle-issue-detected-event decoded-payload) decoded-data)))))))))))
+					  ((string= (event-Name event) "Fuse.BuildIssueDetected") (fuse--handle-issue-detected-event decoded-data))))))))))))
 
 
 (defvar fuse--was-initiated 'nil)
 (defun fuse--mode-init ()
+  (interactive)
   (when (equal fuse--daemon-proc nil)
 	(if (equal system-type 'windows-nt)
 		(setf fuse--daemon-proc (start-process "fuse-mode"
