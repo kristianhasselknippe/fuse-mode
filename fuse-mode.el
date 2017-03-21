@@ -206,7 +206,7 @@
 	(if (equal system-type 'windows-nt)
 		(setf fuse--daemon-proc (start-process "fuse-mode"
 											   "fuse-mode"
-											   "C:/Program Files (x86)/Fuse/Fuse.exe" "daemon-client" "fuse-mode"))
+											   "fuse" "daemon-client" "fuse-mode"))
 	  (setf fuse--daemon-proc (start-process "fuse-mode"
 											 "fuse-mode"
 											 "/usr/local/bin/fuse" "daemon-client" "fuse-mode")))
@@ -371,35 +371,6 @@ module.exports = {
 
 (defun fuse-clear-text-prop (start end)
   (set-text-properties start end nil))
-
-(add-hook 'find-file-hook 'fuse--file-created)
-
-;;;###autoload
-(define-derived-mode fuse-mode fundamental-mode "Fuse major mode"
-  "Major mode for editing JavaScript code."
-  (set (make-local-variable 'max-lisp-eval-depth)
-       (max max-lisp-eval-depth 3000))
-  ;(set (make-local-variable 'indent-line-function) #'fuse-indent-line)
-  ;(set (make-local-variable 'indent-region-function) #'fuse-indent-region)
-  (set (make-local-variable 'syntax-propertize-function) nil)
-  (setq font-lock-defaults '(nil t))
-
-  ;(add-hook 'change-major-mode-hook #'js2-mode-exit nil t)
-  ;(setq next-error-function #'js2-next-error)
-
-  (run-hooks 'fuse-init-hook))
-
-
-
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.ux\\'" . fuse-mode))
-
-
-
-;;;###autoload
-(add-hook 'fuse-mode-hook 'fuse--mode-init)
-
-(define-key fuse-mode-map (kbd "C-c c") 'fuse-auto-complete)
 
 ;(define-key fuse-mode-map (kbd "C-n") 'fuse--next-line-and-selection-change)
 

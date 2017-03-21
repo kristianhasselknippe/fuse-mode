@@ -1,0 +1,6 @@
+<App>
+	<Panel  >
+		<Text Value="foo2" Alignment="Center"/>
+	</Panel>
+
+</App>
