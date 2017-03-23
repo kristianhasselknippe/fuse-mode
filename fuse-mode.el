@@ -75,16 +75,16 @@
 
 (defun fuse--debug-log (msg)
   (with-current-buffer (get-buffer-create "fuse-debug-log")
-						 (insert msg)))
+	(insert msg)))
 
 (defun pos-at-line-col (pos)
   (savey-excursion
-	(let ((l (1- (cdra 'Line pos)))
-		  (c (cdra 'Character pos)))
-	  (goto-char (point-min))
-	  (forward-line l)
-	  (move-to-column c)
-	  (point))))
+   (let ((l (1- (cdra 'Line pos)))
+		 (c (cdra 'Character pos)))
+	 (goto-char (point-min))
+	 (forward-line l)
+	 (move-to-column c)
+	 (point))))
 
 (defun pos-at-end-of-line (line)
   (save-excursion
@@ -112,7 +112,7 @@
 (defun number-to-string-if-not-nil (num)
   (if num (number-to-string num) num))
 
-;BuildId IssueType Path StartPosition EndPosition ErrorCode Message)
+										;BuildId IssueType Path StartPosition EndPosition ErrorCode Message)
 (defun fuse--log-issue-detected (data)
   (fuse--debug-log "issue detected")
   (let ((error-code (issue-detected-data-ErrorCode data))
@@ -134,8 +134,8 @@
 					(ep (pos-at-end-of-line (cdra 'Line start-pos))))
 				(fuse--debug-log "going to start and end\n")
 				(fuse--debug-log (format ":::::: %d %d \n" (cdra 'Line start-pos) (cdra 'Line start-pos)))
-				;(let ((overlay (ov-make sp ep)))
-				;  (ov-set overlay 'face '(:foreground "red")))
+										;(let ((overlay (ov-make sp ep)))
+										;  (ov-set overlay 'face '(:foreground "red")))
 				))
 										;do something for this case
 		  )))))
@@ -143,13 +143,13 @@
 (defun fuse--handle-issue-detected-event (decoded-data)
   (fuse--debug-log "We are tryign to isue detect")
   (let ((data (make-issue-detected-data :BuildId (cdra 'BuildId decoded-data)
-								  :IssueType (cdra 'IssueType decoded-data)
-								  :Path (cdra 'Path decoded-data)
-								  :StartPosition (cdra 'StartPosition decoded-data)
-								  :EndPosition (cdra 'EndPosition decoded-data)
-								  :ErrorCode (cdra 'ErrorCode decoded-data)
-								  :Message (cdra 'Message decoded-data))))
-  (fuse--log-issue-detected data)))
+										:IssueType (cdra 'IssueType decoded-data)
+										:Path (cdra 'Path decoded-data)
+										:StartPosition (cdra 'StartPosition decoded-data)
+										:EndPosition (cdra 'EndPosition decoded-data)
+										:ErrorCode (cdra 'ErrorCode decoded-data)
+										:Message (cdra 'Message decoded-data))))
+	(fuse--log-issue-detected data)))
 
 (defun fuse--log (msg)
   (with-current-buffer (get-buffer-create "fuse-log")
@@ -165,62 +165,64 @@
 	(edebug))
   (fuse--debug-log msg)
   (setf fuse--buffer (concat fuse--buffer msg))
-  (while (> (length fuse--buffer) 0)
-  (let ((message-split (s-split-up-to "\n" fuse--buffer 2)))
-	(when (>= (length message-split) 2)
-	  (let ((msg-len (string-to-number (nth 1 message-split))))
-		(when (>= (length (nth 2 message-split)) msg-len)
-		  (let* ((message (make-message
-						   :Length msg-len
-						   :Type (nth 0 message-split)
-						   :Payload (substring-no-properties (nth 2 message-split) 0 msg-len))))
+  (let ((should-exit-p nil))
+	(while (and (> (length fuse--buffer) 0) (not should-exit-p))
+	  (let ((message-split (s-split-up-to "\n" fuse--buffer 2)))
+		(if (<= (length message-split) 2)
+			(setq should-exit-p true)
+			(let ((msg-len (string-to-number (nth 1 message-split))))
+			  (when (>= (length (nth 2 message-split)) msg-len)
+				(let* ((message (make-message
+								 :Length msg-len
+								 :Type (nth 0 message-split)
+								 :Payload (substring-no-properties (nth 2 message-split) 0 msg-len))))
 
-			(setf fuse--buffer (substring (nth 2 message-split) msg-len (length (nth 2 message-split))))
-			(fuse--debug-log (concat "We got a message" (message-Type message) "\n"))
-			(cond ((string= (message-Type message) "Response")
-				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
-						  (response
-						   (make-response
-							:Id (cdra 'Id decoded-payload)
-							:Status (cdra 'Status decoded-payload)
-							:Errors (cdra 'Errors decoded-payload)
-							:Result (cdra 'Result decoded-payload))))
-					 (cond ((= (response-Id response) 2)
+				  (setf fuse--buffer (substring (nth 2 message-split) msg-len (length (nth 2 message-split))))
+				  (fuse--debug-log (concat "We got a message" (message-Type message) "\n"))
+				  (cond ((string= (message-Type message) "Response")
+						 (let* ((decoded-payload (json-read-from-string (message-Payload message)))
+								(response
+								 (make-response
+								  :Id (cdra 'Id decoded-payload)
+								  :Status (cdra 'Status decoded-payload)
+								  :Errors (cdra 'Errors decoded-payload)
+								  :Result (cdra 'Result decoded-payload))))
+						   (cond ((= (response-Id response) 2)
 
-							(let ((code-com-resp
-								   (make-code-completion-response
-									:IsUpdatingCache (cdra 'IsUpdatingCache (response-Result response))
-									:CodeSuggestions (cdra 'CodeSuggestions (response-Result response))))
-								  (completions-cache '()))
-							  (-each (append (code-completion-response-CodeSuggestions code-com-resp) nil)
-								(lambda (sugg)
-								  (let ((code-suggestion
-										 (make-code-suggestions
-										  :Suggestion (cdra 'Suggestion sugg)
-										  :PreText (cdra 'PreText sugg)
-										  :PostText (cdra 'PostText sugg)
-										  :Type (cdra 'Type sugg)
-										  :ReturnType (cdra 'ReturnType
-															sugg)
-										  :AccessModifiers (cdra 'AccessModifiers sugg)
-										  :FieldModifiers (cdra 'FieldModifiers sugg)
-										  :MethodArguments (cdra 'MethodArguments sugg))))
-									(setq completions-cache
-										  (append completions-cache
-												  (list code-suggestion))))))
-							  (fuse--completion-callback completions-cache))))))
-				               ;; CODE COMPLETION ^^^^^^
+								  (let ((code-com-resp
+										 (make-code-completion-response
+										  :IsUpdatingCache (cdra 'IsUpdatingCache (response-Result response))
+										  :CodeSuggestions (cdra 'CodeSuggestions (response-Result response))))
+										(completions-cache '()))
+									(-each (append (code-completion-response-CodeSuggestions code-com-resp) nil)
+									  (lambda (sugg)
+										(let ((code-suggestion
+											   (make-code-suggestions
+												:Suggestion (cdra 'Suggestion sugg)
+												:PreText (cdra 'PreText sugg)
+												:PostText (cdra 'PostText sugg)
+												:Type (cdra 'Type sugg)
+												:ReturnType (cdra 'ReturnType
+																  sugg)
+												:AccessModifiers (cdra 'AccessModifiers sugg)
+												:FieldModifiers (cdra 'FieldModifiers sugg)
+												:MethodArguments (cdra 'MethodArguments sugg))))
+										  (setq completions-cache
+												(append completions-cache
+														(list code-suggestion))))))
+									(fuse--completion-callback completions-cache))))))
+						;; CODE COMPLETION ^^^^^^
 
-				  ((string= (message-Type message) "Event")
-				   ;(edebug)
-				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
-						  (event (make-event :Name (cdra 'Name decoded-payload)
-											 :Data (cdra 'Data decoded-payload)))
-						  (decoded-data (cdr (assoc 'Data decoded-payload))))
-					 (fuse--debug-log (concat "we got an event at least" (event-Name event) "\n"))
-					 (cond
-					  ((string= (event-Name event) "Fuse.LogEvent") (fuse--handle-log-event decoded-data))
-					  ((string= (event-Name event) "Fuse.BuildIssueDetected") (fuse--handle-issue-detected-event decoded-data)))))))))))))
+						((string= (message-Type message) "Event")
+										;(edebug)
+						 (let* ((decoded-payload (json-read-from-string (message-Payload message)))
+								(event (make-event :Name (cdra 'Name decoded-payload)
+												   :Data (cdra 'Data decoded-payload)))
+								(decoded-data (cdr (assoc 'Data decoded-payload))))
+						   (fuse--debug-log (concat "we got an event at least" (event-Name event) "\n"))
+						   (cond
+							((string= (event-Name event) "Fuse.LogEvent") (fuse--handle-log-event decoded-data))
+							((string= (event-Name event) "Fuse.BuildIssueDetected") (fuse--handle-issue-detected-event decoded-data))))))))))))))
 
 
 (defvar fuse--was-initiated 'nil)
