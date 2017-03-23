@@ -100,15 +100,20 @@
 	(back-to-indentation)
 	(point)))
 
-(defun fuse--open-file-at-line (file line)
-  (message (format "we are opening %s at %s" file line))
-  (open-file file))
+(defun fuse--open-file-at-line (line path)
+  (message (format "we are opening %s at %s" path line))
+  (find-file-other-window path))
 
 (defun fuse--write-issue-detected-to-buffer (path line)
   (with-current-buffer (get-buffer-create "fuse-errors")
-	(insert-text-button (format "%s -- line: %s\n" path line) 'action (lambda (x)
-																		(fuse--debug-log (format "foooooobar %s\n" path))
-																		(fuse--open-file-at-line path line)))))
+	(insert-text-button (format "%s -- line: %s\n" path line)
+					    'path path
+						'line line
+						'action (lambda (button)
+								  (let ((path (button-get button 'line))
+										(line (button-get button 'path)))
+									(fuse--debug-log (format "button pressed and we're going to %s\n" path))
+									(fuse--open-file-at-line path line))))))
 (defun number-to-string-if-not-nil (num)
   (if num (number-to-string num) num))
 
