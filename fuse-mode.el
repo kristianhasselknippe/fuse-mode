@@ -165,6 +165,7 @@
 	(edebug))
   (fuse--debug-log msg)
   (setf fuse--buffer (concat fuse--buffer msg))
+  (while (> (length fuse--buffer) 0)
   (let ((message-split (s-split-up-to "\n" fuse--buffer 2)))
 	(when (>= (length message-split) 2)
 	  (let ((msg-len (string-to-number (nth 1 message-split))))
@@ -219,7 +220,7 @@
 					 (fuse--debug-log (concat "we got an event at least" (event-Name event) "\n"))
 					 (cond
 					  ((string= (event-Name event) "Fuse.LogEvent") (fuse--handle-log-event decoded-data))
-					  ((string= (event-Name event) "Fuse.BuildIssueDetected") (fuse--handle-issue-detected-event decoded-data))))))))))))
+					  ((string= (event-Name event) "Fuse.BuildIssueDetected") (fuse--handle-issue-detected-event decoded-data)))))))))))))
 
 
 (defvar fuse--was-initiated 'nil)

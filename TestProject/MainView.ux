@@ -1,8 +1,8 @@
-<App> 
-	<Panel Alignment="TopRight" Color="Red">  
+<App>
+	<Panel Alignment="TopRight" Color="Red">
 		<Text Value="foo2" Alignment="Center" />
-		<Clicked      
-			
+		<Clicked
+			<DebugAction Message="Fusetools" />
 		</Clicked>
 	</Panel>
 
