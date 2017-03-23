@@ -109,13 +109,15 @@
 	(insert-text-button (format "%s -- line: %s\n" path line) 'action (lambda (x)
 																		(fuse--debug-log (format "foooooobar %s\n" path))
 																		(fuse--open-file-at-line path line)))))
+(defun number-to-string-if-not-nil (num)
+  (if num (number-to-string num) num))
 
 ;BuildId IssueType Path StartPosition EndPosition ErrorCode Message)
 (defun fuse--log-issue-detected (data)
   (fuse--debug-log "issue detected")
   (let ((error-code (issue-detected-data-ErrorCode data))
 		(path (issue-detected-data-Path data))
-		(line (number-to-string (cdra 'Line (issue-detected-data-StartPosition data))))
+		(line (number-to-string-if-not-nil (cdra 'Line (issue-detected-data-StartPosition data))))
 		(start-pos (issue-detected-data-StartPosition data))
 		(end-pos (issue-detected-data-EndPosition data)))
 	(fuse--log (concat
