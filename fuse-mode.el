@@ -168,7 +168,7 @@
   (let ((should-exit-p nil))
 	(while (and (> (length fuse--buffer) 0) (not should-exit-p))
 	  (let ((message-split (s-split-up-to "\n" fuse--buffer 2)))
-		(if (<= (length message-split) 2)
+		(if (< (length message-split) 2)
 			(setq should-exit-p true)
 			(let ((msg-len (string-to-number (nth 1 message-split))))
 			  (when (>= (length (nth 2 message-split)) msg-len)
