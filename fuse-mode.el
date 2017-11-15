@@ -58,7 +58,10 @@
 (defstruct-and-to-obj issue-detected-data BuildId IssueType Path StartPosition EndPosition ErrorCode Message)
 (defstruct-and-to-obj subscribe-request-args Filter Replay Id)
 (defstruct-and-to-obj caret-position Line Character)
+
 (defstruct-and-to-obj code-completion-request-args SyntaxType Path Text CaretPosition)
+(defstruct-and-to-obj go-to-definition-request-args Path Text SyntaxType CaretPosition)
+
 (defstruct-and-to-obj request Name Id Arguments)
 (defstruct-and-to-obj response Id Status Result Errors)
 (defstruct-and-to-obj message Type Length Payload)
@@ -66,7 +69,9 @@
 
 (defstruct-and-to-obj method-argument name ArgType IsOut)
 (defstruct-and-to-obj code-suggestions Suggestion PreText PostText Type ReturnType AccessModifiers FieldModifiers MethodArguments)
+
 (defstruct-and-to-obj code-completion-response IsUpdatingCache CodeSuggestions)
+(defstruct-and-to-obj go-to-definition-response Path CaretPosition)
 
 
 (defun message-to-string (message)
@@ -147,7 +152,7 @@
 								  :EndPosition (cdra 'EndPosition decoded-data)
 								  :ErrorCode (cdra 'ErrorCode decoded-data)
 								  :Message (cdra 'Message decoded-data))))
-  (fuse--log-issue-detected data)))
+	(fuse--log-issue-detected data)))
 
 (defun fuse--log (msg)
   (with-current-buffer (get-buffer-create "fuse-log")
@@ -155,6 +160,9 @@
 
 (defun fuse--handle-log-event (decoded-data)
   (fuse--log (cdra 'Message decoded-data)))
+
+(defun fuse--handle-go-to-definition-event ()
+  )
 
 
 (defun fuse--filter (proc msg)
@@ -174,7 +182,8 @@
 
 			(setf fuse--buffer (substring (nth 2 message-split) msg-len (length (nth 2 message-split))))
 			(fuse--debug-log (concat "We got a message" (message-Type message) "\n"))
-			(cond ((string= (message-Type message) "Response")
+			(cond ((equal (message-Type message) "Response")
+				   (fuse--debug-log "Handling message as response")
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
 						  (response
 						   (make-response
@@ -183,7 +192,6 @@
 							:Errors (cdra 'Errors decoded-payload)
 							:Result (cdra 'Result decoded-payload))))
 					 (cond ((= (response-Id response) 2)
-
 							(let ((code-com-resp
 								   (make-code-completion-response
 									:IsUpdatingCache (cdra 'IsUpdatingCache (response-Result response))
@@ -205,10 +213,30 @@
 									(setq completions-cache
 										  (append completions-cache
 												  (list code-suggestion))))))
-							  (fuse--completion-callback completions-cache))))))
+							  (fuse--completion-callback completions-cache)))
+						   ((= (response-Id response) 3)
+							(fuse--debug-log "Got goto definition resposne")
+							(fuse--debug-log (concat "Status: " (response-Status response)))
+							(if (equal (response-Status response) "Success")
+								(progn
+								  (fuse--debug-log "Success, and so we are processing further")
+								  (let* ((goto-def-result (response-Result response))
+										 (path (cdra 'Path goto-def-result))
+										 (caret-pos (cdra 'CaretPosition goto-def-result))
+										 (caret-line (cdra 'Line caret-pos))
+										 (caret-char (cdra 'Character caret-pos)))
+									(if (equal path "(unknown)")
+										(fuse--debug-log "Path was unknown")
+									  (progn 
+										(fuse--debug-log (concat "Path: " path "\n"))
+										(fuse--debug-log (format "Caret-line: %s\n" caret-line))
+										(fuse--debug-log (format "Caret-line: %s\n" caret-char))
+										(find-file path)
+										(goto-char (point-min))
+										(goto-line caret-line))))) 
+							  (fuse--debug-log "Didnt get valid goto def response"))))))
 				               ;; CODE COMPLETION ^^^^^^
-
-				  ((string= (message-Type message) "Event")
+				  ((equal (message-Type message) "Event")
 				   ;(edebug)
 				   (let* ((decoded-payload (json-read-from-string (message-Payload message)))
 						  (event (make-event :Name (cdra 'Name decoded-payload)
@@ -289,6 +317,23 @@
 		   (the-message (message-to-string message-to-send)))
 	  (fuse--process-send-string the-message))))
 
+(defun fuse--request-go-to-definition ()
+  (let* ((request (make-request :Name "Fuse.GotoDefinition"
+								:Id 3
+								:Arguments (make-go-to-definition-request-args
+											:Path (fuse--get-buffer-path)
+											:Text (fuse--get-buffer-text)
+											:SyntaxType (car (last (s-split "\\." (buffer-file-name))))
+											:CaretPosition (make-caret-position
+															:Line (count-lines 1 (point))
+															:Character (+ (line-offset) 1))))))
+	(let* ((req-obj (fuse--serializable request))
+		   (req-obj-json (json-encode req-obj))
+		   (message-to-send (make-message :Type "Request"
+										  :Length  (string-bytes req-obj-json)
+										  :Payload req-obj-json))
+		   (the-message (message-to-string message-to-send)))
+	  (fuse--process-send-string the-message))))
 
 (defun fuse--selection-changed ()
   (interactive)
@@ -359,6 +404,10 @@
 (defun fuse-auto-complete ()
   (interactive)
   (fuse--request-code-completion))
+
+(defun fuse-request-go-to-definition ()
+  (interactive)
+  (fuse--request-go-to-definition))
 
 
 ;;Here comes some utilities for creating new Fuse related files
